@@ -1,26 +1,209 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ------------------------------------------------------------------ */
+/*  Mermaid Crafted — design tokens                                    */
+/*  Palette + type scale derived from the brand mockups:               */
+/*  dusty blush grounds, chocolate-brown ink, a warm rose accent.      */
+/* ------------------------------------------------------------------ */
+@theme {
+  /* Grounds */
+  --color-blush-50: #fbf1f0;
+  --color-blush-100: #f7e5e3;
+  --color-blush-200: #f1d6d3; /* page background */
+  --color-blush-300: #e9c4bf;
+  --color-cream: #fbefea; /* raised cards */
+  --color-sand: #ead9c7;
+
+  /* Accent — rose / coral */
+  --color-rose-300: #efb2ab;
+  --color-rose-400: #e79a93; /* primary accent */
+  --color-rose-500: #db847c;
+  --color-coral: #ee8e86;
+
+  /* Ink — chocolate browns (text + dark bands) */
+  --color-brown-700: #5a4636;
+  --color-brown-800: #45332a;
+  --color-brown-900: #33241d; /* body ink + info band */
+  --color-ink: #2a1d16;
+
+  /* Type roles (families wired up via next/font in layout.tsx) */
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+  --font-script: var(--font-pacifico);
+
+  /* Rounder-than-default radii for the soft, handmade feel */
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+  --radius-4xl: 2.25rem;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-blush-200);
+    color: var(--color-brown-900);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Display face: tight, warm, confident — the hero's voice. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), Georgia, "Times New Roman", serif;
+    letter-spacing: -0.02em;
+  }
+
+  ::selection {
+    background: var(--color-rose-400);
+    color: #fff;
+  }
+
+  /* Quality floor: always-visible keyboard focus. */
+  :focus-visible {
+    outline: 2px solid var(--color-brown-900);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Signature: woven thread-lines that ripple behind the hero. */
+  .thread-lines {
+    background-image: repeating-radial-gradient(
+      circle at 120% 40%,
+      transparent 0,
+      transparent 26px,
+      color-mix(in srgb, var(--color-brown-900) 7%, transparent) 27px,
+      transparent 29px
+    );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Aurora background — slow rose light-streaks drifting behind the    */
+/*  page. Fixed and pointer-transparent; sits at -z so all content     */
+/*  paints above it, while the blush body colour shows as the base.    */
+/*  Colours/speed/intensity are runtime CSS vars so the dev colour     */
+/*  editor can tune them live; these are the shipped defaults.         */
+/* ------------------------------------------------------------------ */
+:root {
+  --aurora-c1: #f3bcb5; /* light rose */
+  --aurora-c2: #f8c9c2; /* light coral */
+  --aurora-c3: #ecb5c7; /* light orchid-pink */
+  --aurora-fade: #f1d6d3; /* = blush-200, so streak edges melt into the page */
+  --aurora-speed: 1; /* duration multiplier (higher = slower) */
+  --aurora-opacity: 1;
+}
+
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--aurora-opacity, 1);
+}
+
+.aurora .rainbow {
+  position: absolute;
+  top: 0;
+  right: 50vw;
+  height: 100vh;
+  width: 0;
+  transform-origin: top right;
+  will-change: transform;
+  animation-name: aurora-slide;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+/* Blush vignette bars that focus the light and soften the edges. */
+.aurora .aurora-h {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 0;
+  box-shadow: 0 0 50vh 40vh var(--color-blush-200);
+}
+
+.aurora .aurora-v {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 100vh;
+  box-shadow: 0 0 35vw 25vw var(--color-blush-200);
+}
+
+/* Transform-based sweep (GPU-composited) for a smoother drift than
+   animating `right`. The 10° tilt gives the streaks their diagonal lean. */
+@keyframes aurora-slide {
+  from {
+    transform: rotate(10deg) translateX(-80vw);
+  }
+  to {
+    transform: rotate(10deg) translateX(80vw);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Premium product showcase — Apple-ad / luxury-ecommerce styling.    */
+/*  SF Pro on Apple devices, graceful Inter fallback elsewhere.        */
+/* ------------------------------------------------------------------ */
+.font-sf {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Slow vertical float for the floating hero product. */
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Page-load entrance: fade while rising a touch. */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spring-ish pop for the price / accents. */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

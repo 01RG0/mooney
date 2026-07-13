@@ -1,0 +1,207 @@
+[
+  {
+    "id": "p-001",
+    "slug": "natural-willow-basket",
+    "name": "Natural Willow Basket",
+    "category": "baskets",
+    "price": 68.0,
+    "image": "/products/natural-willow-basket.png",
+    "description": "A round market basket woven from unpeeled willow with a high, sturdy handle. Each one is shaped over a wooden mould and finished by hand, so no two curves are ever quite the same.",
+    "details": [
+      "Hand-woven unpeeled willow",
+      "Approx. 32cm wide × 34cm tall",
+      "Reinforced braided rim",
+      "Holds up to 6kg"
+    ],
+    "colors": [
+      { "name": "Natural", "hex": "#c8a06a" },
+      { "name": "Honey", "hex": "#b07f43" }
+    ],
+    "maker": "Elara, Willow Studio",
+    "isNew": true
+  },
+  {
+    "id": "p-002",
+    "slug": "blush-willow-basket",
+    "name": "Blush Willow Basket",
+    "category": "baskets",
+    "price": 74.0,
+    "image": "/products/blush-willow-basket.png",
+    "description": "The market basket you know, dipped in a soft rose wash. A gift-ready piece for spring gathering, styling a shelf, or carrying market flowers home.",
+    "details": [
+      "Hand-woven willow, rose-dyed",
+      "Approx. 30cm wide × 33cm tall",
+      "Water-based, colour-fast dye",
+      "Braided arch handle"
+    ],
+    "colors": [
+      { "name": "Blush", "hex": "#d98ea3" },
+      { "name": "Dusty Rose", "hex": "#c76f88" }
+    ],
+    "maker": "Elara, Willow Studio",
+    "isNew": true
+  },
+  {
+    "id": "p-003",
+    "slug": "rose-chiffon-bloom",
+    "name": "Rose Chiffon Bloom",
+    "category": "florals",
+    "price": 24.0,
+    "image": "/products/rose-chiffon-bloom.png",
+    "description": "A layered chiffon flower cut and singed petal by petal, then hand-stitched into a full bloom. Wear it as a brooch, pin it to a bag, or set a few in a bowl.",
+    "details": [
+      "Layered chiffon petals",
+      "Approx. 11cm across",
+      "Felt backing with pin",
+      "Steam to refresh the shape"
+    ],
+    "colors": [
+      { "name": "Petal Pink", "hex": "#f6c2c8" },
+      { "name": "Blush", "hex": "#efa9b2" },
+      { "name": "Ivory", "hex": "#f2e7dd" }
+    ],
+    "maker": "Maya, Petalwork",
+    "isNew": true
+  },
+  {
+    "id": "p-004",
+    "slug": "zen-stone-stack",
+    "name": "Zen Stone Stack",
+    "category": "stone-art",
+    "price": 46.0,
+    "image": "/products/zen-stone-stack.png",
+    "description": "Six river stones, sorted for balance and quietly bonded into a standing cairn. A small, grounding weight for a desk or windowsill.",
+    "details": [
+      "Genuine river stones",
+      "Approx. 18cm tall",
+      "Felt-padded base",
+      "Each stack is one of a kind"
+    ],
+    "colors": [
+      { "name": "River Grey", "hex": "#9a9793" },
+      { "name": "Sand", "hex": "#c4b49b" }
+    ],
+    "maker": "Kai, Stillwater",
+    "isNew": false
+  },
+  {
+    "id": "p-005",
+    "slug": "petite-willow-catchall",
+    "name": "Petite Willow Catch-All",
+    "category": "home-decor",
+    "price": 38.0,
+    "image": "/products/natural-willow-basket.png",
+    "description": "A shallow woven bowl for keys, fruit, or a tangle of yarn. The everyday willow piece that ends up holding whatever a room needs it to.",
+    "details": [
+      "Hand-woven willow",
+      "Approx. 22cm wide × 12cm tall",
+      "Low open profile",
+      "Lightweight"
+    ],
+    "colors": [{ "name": "Natural", "hex": "#c8a06a" }],
+    "maker": "Elara, Willow Studio",
+    "isNew": false
+  },
+  {
+    "id": "p-006",
+    "slug": "blush-bloom-trio",
+    "name": "Blush Bloom Trio",
+    "category": "florals",
+    "price": 60.0,
+    "image": "/products/rose-chiffon-bloom.png",
+    "description": "Three chiffon blooms in graded shades of pink, boxed together for a gift that keeps its bloom all year. Lovely along a mantel or gathered in a small vase.",
+    "details": [
+      "Set of three blooms",
+      "Graded pink tones",
+      "Gift-boxed",
+      "Approx. 11cm each"
+    ],
+    "colors": [
+      { "name": "Rose Fade", "hex": "#efa9b2" },
+      { "name": "Ivory Mix", "hex": "#f2e7dd" }
+    ],
+    "maker": "Maya, Petalwork",
+    "isNew": true
+  },
+  {
+    "id": "p-007",
+    "slug": "balance-stone-pair",
+    "name": "Balance Stone Pair",
+    "category": "stone-art",
+    "price": 32.0,
+    "image": "/products/zen-stone-stack.png",
+    "description": "Two matched river stones chosen to rest on one another — a smaller, simpler cairn for a bedside or bookshelf.",
+    "details": [
+      "Two balanced river stones",
+      "Approx. 9cm tall",
+      "Felt-padded base",
+      "Naturally unique markings"
+    ],
+    "colors": [{ "name": "River Grey", "hex": "#9a9793" }],
+    "maker": "Kai, Stillwater",
+    "isNew": false
+  },
+  {
+    "id": "p-008",
+    "slug": "rose-market-basket",
+    "name": "Rose Market Basket",
+    "category": "home-decor",
+    "price": 82.0,
+    "image": "/products/blush-willow-basket.png",
+    "description": "Our largest rose-washed basket, sized for blankets by the sofa or a full armful of market blooms. A statement piece that still earns its keep.",
+    "details": [
+      "Hand-woven, rose-dyed willow",
+      "Approx. 36cm wide × 38cm tall",
+      "Extra-deep well",
+      "Braided arch handle"
+    ],
+    "colors": [
+      { "name": "Blush", "hex": "#d98ea3" },
+      { "name": "Dusty Rose", "hex": "#c76f88" }
+    ],
+    "maker": "Elara, Willow Studio",
+    "isNew": false
+  },
+  {
+    "id": "p-009",
+    "slug": "ivory-chiffon-bloom",
+    "name": "Ivory Chiffon Bloom",
+    "category": "florals",
+    "price": 24.0,
+    "image": "/products/rose-chiffon-bloom.png",
+    "description": "The chiffon bloom in soft ivory, for weddings, hair, or a neutral corner. Same petal-by-petal build, gentler on the palette.",
+    "details": [
+      "Layered chiffon petals",
+      "Approx. 11cm across",
+      "Felt backing with pin",
+      "Steam to refresh"
+    ],
+    "colors": [
+      { "name": "Ivory", "hex": "#f2e7dd" },
+      { "name": "Champagne", "hex": "#e6d3b8" }
+    ],
+    "maker": "Maya, Petalwork",
+    "isNew": false
+  },
+  {
+    "id": "p-010",
+    "slug": "cairn-centerpiece",
+    "name": "Cairn Centerpiece",
+    "category": "stone-art",
+    "price": 88.0,
+    "image": "/products/zen-stone-stack.png",
+    "description": "A tall eight-stone cairn built as a table centerpiece — the most ambitious balance we make, sealed to hold its poise for years.",
+    "details": [
+      "Eight balanced river stones",
+      "Approx. 26cm tall",
+      "Weighted, felt-padded base",
+      "One-of-a-kind"
+    ],
+    "colors": [
+      { "name": "River Grey", "hex": "#9a9793" },
+      { "name": "Sand", "hex": "#c4b49b" }
+    ],
+    "maker": "Kai, Stillwater",
+    "isNew": true
+  }
+]

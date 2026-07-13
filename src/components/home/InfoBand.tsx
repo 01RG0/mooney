@@ -1,0 +1,75 @@
+import Link from "next/link";
+import { Container } from "@/components/ui/Container";
+import { ArrowRightIcon } from "@/components/ui/icons";
+
+const ARTISTS = [
+  { name: "Elara", craft: "Baskets" },
+  { name: "Maya", craft: "Florals" },
+  { name: "Kai", craft: "Stone Art" },
+  { name: "Liam", craft: "Leatherwork" },
+];
+
+export function InfoBand() {
+  return (
+    <section id="community" className="py-8">
+      <Container>
+        <div className="grid gap-px overflow-hidden rounded-4xl bg-brown-800 text-blush-100 shadow-[0_40px_100px_-50px_rgba(51,36,29,0.7)] md:grid-cols-3">
+          {/* Discovery */}
+          <div id="story" className="bg-brown-900 p-8 lg:p-10">
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-blush-100/50">
+              Discovery
+            </span>
+            <h2 className="mt-4 font-display text-2xl font-semibold leading-snug text-blush-100">
+              Begin your journey with curated handmade style.
+            </h2>
+            <Link
+              href="/shop"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-rose-300 underline-offset-4 hover:underline"
+            >
+              Discover your pieces
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {/* Artist Highlights */}
+          <div className="bg-brown-800 p-8 lg:p-10">
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-blush-100/50">
+              Artist Highlights
+            </span>
+            <h3 className="mt-4 font-display text-xl font-semibold text-blush-100">
+              Meet our featured artisans each month.
+            </h3>
+            <div className="mt-6 flex items-center gap-3">
+              <span className="h-11 w-11 rounded-full bg-gradient-to-br from-rose-300 to-brown-700 ring-2 ring-brown-900" />
+              <div className="text-sm">
+                <p className="font-medium text-blush-100">Artist of the Month</p>
+                <p className="text-blush-100/60">Elara · Baskets</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Community */}
+          <div className="bg-brown-900 p-8 lg:p-10">
+            <span className="text-xs font-medium uppercase tracking-[0.18em] text-blush-100/50">
+              Community
+            </span>
+            <h3 className="mt-4 font-display text-xl font-semibold text-blush-100">
+              Meet the Artists
+            </h3>
+            <ul className="mt-5 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              {ARTISTS.map((artist) => (
+                <li key={artist.name} className="text-blush-100/75">
+                  <span className="text-blush-100">{artist.name}</span>,{" "}
+                  {artist.craft}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-5 text-sm text-blush-100/60">
+              +250 artisans featured
+            </p>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "slug": "baskets",
+    "name": "Baskets",
+    "tagline": "Hand-woven willow, made to carry a little beauty",
+    "image": "/products/natural-willow-basket.png"
+  },
+  {
+    "slug": "florals",
+    "name": "Florals",
+    "tagline": "Chiffon blooms that never wilt",
+    "image": "/products/rose-chiffon-bloom.png"
+  },
+  {
+    "slug": "stone-art",
+    "name": "Stone Art",
+    "tagline": "River stones, balanced by hand",
+    "image": "/products/zen-stone-stack.png"
+  },
+  {
+    "slug": "home-decor",
+    "name": "Home Décor",
+    "tagline": "Quiet pieces for a considered home",
+    "image": "/products/blush-willow-basket.png"
+  }
+]
