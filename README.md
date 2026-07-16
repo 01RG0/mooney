@@ -1,4 +1,4 @@
-# Mooney — Mermaid Crafted
+# Mooney — Meromade Crafted
 
 An e-commerce storefront for handmade goods: woven baskets, chiffon florals, stone art, and home décor. Built with Next.js 16, React 19, Tailwind CSS v4, and TypeScript.
 
