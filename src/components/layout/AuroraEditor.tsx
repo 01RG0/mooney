@@ -26,27 +26,27 @@ const PALETTE: Group[] = [
       { var: "--color-blush-50", label: "Blush 50", def: "#fbf1f0" },
       { var: "--color-blush-100", label: "Blush 100", def: "#f7e5e3" },
       { var: "--color-blush-200", label: "Blush 200", hint: "page bg", def: "#f1d6d3" },
-      { var: "--color-blush-300", label: "Blush 300", def: "#e9c4bf" },
-      { var: "--color-cream", label: "Cream", hint: "cards", def: "#fbefea" },
+      { var: "--color-blush-300", label: "Blush 300", def: "#ffd1d1" },
+      { var: "--color-cream", label: "Cream", hint: "cards", def: "#dd9c9c" },
       { var: "--color-sand", label: "Sand", def: "#ead9c7" },
     ],
   },
   {
     name: "Accent",
     tokens: [
-      { var: "--color-rose-300", label: "Rose 300", def: "#efb2ab" },
-      { var: "--color-rose-400", label: "Rose 400", hint: "primary", def: "#e79a93" },
-      { var: "--color-rose-500", label: "Rose 500", def: "#db847c" },
-      { var: "--color-coral", label: "Coral", def: "#ee8e86" },
+      { var: "--color-rose-300", label: "Rose 300", def: "#f0cbc7" },
+      { var: "--color-rose-400", label: "Rose 400", hint: "primary", def: "#944a19" },
+      { var: "--color-rose-500", label: "Rose 500", def: "#ed91a4" },
+      { var: "--color-coral", label: "Coral", def: "#ecc4c1" },
     ],
   },
   {
     name: "Ink",
     tokens: [
-      { var: "--color-brown-700", label: "Brown 700", def: "#5a4636" },
-      { var: "--color-brown-800", label: "Brown 800", def: "#45332a" },
-      { var: "--color-brown-900", label: "Brown 900", hint: "text / band", def: "#33241d" },
-      { var: "--color-ink", label: "Ink", def: "#2a1d16" },
+      { var: "--color-brown-700", label: "Brown 700", def: "#291919" },
+      { var: "--color-brown-800", label: "Brown 800", def: "#43280e" },
+      { var: "--color-brown-900", label: "Brown 900", hint: "text / band", def: "#1f0e00" },
+      { var: "--color-ink", label: "Ink", def: "#291c15" },
     ],
   },
 ];
@@ -65,7 +65,7 @@ type Aurora = {
 type Settings = { aurora: Aurora; palette: Record<string, string> };
 
 const DEFAULTS: Settings = {
-  aurora: { c1: "#f3bcb5", c2: "#f8c9c2", c3: "#ecb5c7", fade: "#f1d6d3", speed: 1, opacity: 1 },
+  aurora: { c1: "#f0c7d3", c2: "#8f7361", c3: "#ecb5c7", fade: "#f0b7ce", speed: 0.6, opacity: 1 },
   palette: Object.fromEntries(ALL_TOKENS.map((t) => [t.var, t.def])),
 };
 
@@ -91,6 +91,7 @@ export function AuroraEditor() {
   const [s, setS] = useState<Settings>(DEFAULTS);
   const [copied, setCopied] = useState(false);
 
+  // Sync from localStorage on mount — setState here is intentional (external system).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(KEY);
@@ -102,6 +103,7 @@ export function AuroraEditor() {
               palette: { ...DEFAULTS.palette, ...parsed.palette },
             }
           : DEFAULTS;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setS(next);
     } catch {
       // corrupt storage — keep DEFAULTS

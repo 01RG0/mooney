@@ -6,6 +6,3 @@ export function computeShipping(subtotal: number): number {
   return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING;
 }
 
-function computeTotal(subtotal: number): number {
-  return subtotal + computeShipping(subtotal);
-}

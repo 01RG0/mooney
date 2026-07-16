@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ComponentProps, ReactNode } from "react";
 
 type Variant = "primary" | "dark" | "outline" | "ghost";
 type Size = "sm" | "md" | "lg";
@@ -33,13 +33,13 @@ interface CommonProps {
   children: ReactNode;
 }
 
-function Button({
+export function Button({
   variant = "primary",
   size = "md",
   className = "",
   children,
   ...props
-}: CommonProps & Omit<ComponentProps<"button">, "className" | "children">) {
+}: CommonProps & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button className={classes(variant, size, className)} {...props}>
       {children}

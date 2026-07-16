@@ -114,8 +114,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
         </div>
 
         {/* ── Cream card — mobile: overlaps stage · desktop: right column ── */}
+        {/* z-0 on mobile so it never sits above the colour buttons in the pink stage above */}
         <div
-          className="relative z-10 -mt-1 rounded-t-[36px] px-7 pb-9 pt-7 shadow-[0_-12px_40px_-18px_rgba(0,0,0,0.18)] lg:mt-0 lg:flex lg:flex-col lg:justify-center lg:rounded-none lg:px-14 lg:py-16 lg:shadow-[-20px_0_50px_-30px_rgba(0,0,0,0.2)]"
+          className="relative z-0 -mt-1 rounded-t-[36px] px-7 pb-9 pt-7 shadow-[0_-12px_40px_-18px_rgba(0,0,0,0.18)] lg:z-10 lg:mt-0 lg:flex lg:flex-col lg:justify-center lg:rounded-none lg:px-14 lg:py-16 lg:shadow-[-20px_0_50px_-30px_rgba(0,0,0,0.2)]"
           style={{ background: "#FFF8F7" }}
         >
           <p className="text-[13px] font-medium tracking-wide text-[#B79A98]">
@@ -149,7 +150,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </ul>
           )}
 
-          <div className="mt-7 flex items-center justify-between gap-4 lg:mt-10">
+          <div className="mt-7 flex flex-wrap items-center justify-between gap-3 lg:mt-10">
             <span
               key={product.price}
               className="text-[26px] font-bold tracking-tight text-[#111111] lg:text-[32px]"

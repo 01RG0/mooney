@@ -11,7 +11,7 @@ export function CartButton() {
     <Link
       href="/cart"
       aria-label={`Cart${isHydrated && count > 0 ? `, ${count} item${count === 1 ? "" : "s"}` : ""}`}
-      className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-brown-900 transition-colors hover:bg-brown-900/8"
+      className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-brown-900 transition-colors hover:bg-brown-900/8 active:bg-brown-900/12"
     >
       <BagIcon />
       {isHydrated && count > 0 && (

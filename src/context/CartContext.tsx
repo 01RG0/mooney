@@ -40,14 +40,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Hydrate from localStorage once on mount.
+  // Hydrate from localStorage once on mount. setState here is intentional —
+  // localStorage is an external system we read from exactly once on mount.
   useEffect(() => {
+    let saved: CartItem[] = [];
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw) as CartItem[]);
+      if (raw) saved = JSON.parse(raw) as CartItem[];
     } catch {
       // Corrupt or unavailable storage — start empty.
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setItems(saved);
     setIsHydrated(true);
   }, []);
 

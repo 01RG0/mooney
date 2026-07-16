@@ -1,9 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter, Pacifico } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { AuroraBackground } from "@/components/layout/AuroraBackground";
-import { AuroraEditor } from "@/components/layout/AuroraEditor";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -27,8 +26,13 @@ const pacifico = Pacifico({
   weight: ["400"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
-  title: "Mermaid Crafted — The Art of Handmade in Every Piece",
+  title: "Meromade — The Art of Handmade in Every Piece",
   description:
     "A curated collection of artisan-made baskets, florals, stone art, and home décor. Handmade, one piece at a time.",
 };
@@ -50,7 +54,6 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </CartProvider>
-        {process.env.NODE_ENV === "development" && <AuroraEditor />}
       </body>
     </html>
   );

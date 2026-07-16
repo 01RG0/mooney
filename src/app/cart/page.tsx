@@ -63,7 +63,7 @@ export default function CartPage() {
         {/* Line items */}
         <ul className="divide-y divide-brown-900/10">
           {items.map((item) => (
-            <li key={item.id} className="flex gap-4 py-5">
+            <li key={item.id} className="flex min-w-0 gap-4 py-5">
               <Link
                 href={`/product/${item.slug}`}
                 className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-cream/70 p-2"
@@ -95,13 +95,13 @@ export default function CartPage() {
                   </span>
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-3">
+                <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3">
                   <div className="inline-flex items-center rounded-full border border-brown-900/20 bg-cream/60">
                     <button
                       type="button"
                       aria-label={`Decrease quantity of ${item.name}`}
                       onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-brown-900 hover:bg-brown-900/8"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-brown-900 hover:bg-brown-900/8 active:bg-brown-900/12"
                     >
                       <MinusIcon className="h-4 w-4" />
                     </button>
@@ -112,7 +112,7 @@ export default function CartPage() {
                       type="button"
                       aria-label={`Increase quantity of ${item.name}`}
                       onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-full text-brown-900 hover:bg-brown-900/8"
+                      className="flex h-11 w-11 items-center justify-center rounded-full text-brown-900 hover:bg-brown-900/8 active:bg-brown-900/12"
                     >
                       <PlusIcon className="h-4 w-4" />
                     </button>
@@ -121,7 +121,7 @@ export default function CartPage() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    className="inline-flex items-center gap-1.5 text-sm text-brown-700 transition-colors hover:text-rose-500"
+                    className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm text-brown-700 transition-colors hover:text-rose-500 active:text-rose-500"
                   >
                     <TrashIcon className="h-4 w-4" />
                     Remove

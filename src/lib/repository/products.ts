@@ -20,27 +20,8 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return products.find((p) => p.slug === slug) ?? null;
 }
 
-async function getProductsByCategory(category: string): Promise<Product[]> {
-  return products.filter((p) => p.category === category);
-}
-
-async function searchProducts(query: string): Promise<Product[]> {
-  const q = query.trim().toLowerCase();
-  if (!q) return products;
-  return products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q) ||
-      p.maker.toLowerCase().includes(q),
-  );
-}
-
 export async function getCategories(): Promise<Category[]> {
   return categories;
-}
-
-async function getCategory(slug: string): Promise<Category | null> {
-  return categories.find((c) => c.slug === slug) ?? null;
 }
 
 export async function getNewArrivals(limit = 6): Promise<Product[]> {

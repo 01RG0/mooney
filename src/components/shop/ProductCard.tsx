@@ -56,7 +56,7 @@ export function ProductCard({ product }: { product: Product }) {
                 color: product.colors[0]?.name ?? "Default",
               })
             }
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rose-400 text-white transition-colors hover:bg-rose-500"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-rose-400 text-white transition-colors hover:bg-rose-500 active:scale-95"
           >
             <PlusIcon className="h-4 w-4" />
           </button>

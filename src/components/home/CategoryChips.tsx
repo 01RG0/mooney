@@ -29,7 +29,7 @@ export async function CategoryChips() {
               <span className="min-w-0">
                 <span className="flex items-center gap-1 font-display text-lg font-semibold text-brown-900">
                   {category.name}
-                  <ArrowUpRightIcon className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
+                  <ArrowUpRightIcon className="h-4 w-4 opacity-40 transition-opacity group-hover:opacity-100" />
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-brown-700">
                   {category.tagline}
