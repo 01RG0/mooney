@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signInWithPopup,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
   sendPasswordResetEmail,
   browserLocalPersistence,
@@ -57,6 +58,12 @@ function firebaseErrorMessage(code: string): string {
       return "Sign-in popup was closed. Please try again.";
     case "auth/cancelled-popup-request":
       return "";
+    case "auth/unauthorized-domain":
+      return "This domain is not authorized for sign-in. Please contact support.";
+    case "auth/operation-not-allowed":
+      return "Google sign-in is not enabled. Please contact support.";
+    case "auth/network-request-failed":
+      return "Network error. Check your connection and try again.";
     default:
       return "Something went wrong. Please try again.";
   }
@@ -188,10 +195,18 @@ export function AuthCard() {
     setAuthError("");
     setSubmitting(true);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-      // onAuthStateChanged in AuthContext will update user → redirect fires.
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const info = getAdditionalUserInfo(result);
+      if (info?.isNewUser) {
+        // New Google user — block the auth-state redirect and send them
+        // through the avatar picker just like email signup does.
+        skipRedirect.current = true;
+        setMode("pick-avatar");
+      }
+      // Existing users: onAuthStateChanged fires → useEffect redirects to /shop.
     } catch (err: unknown) {
       const code = (err as { code?: string }).code ?? "";
+      console.error("[Google sign-in error]", code);
       const msg = firebaseErrorMessage(code);
       if (msg) setAuthError(msg);
     } finally {
