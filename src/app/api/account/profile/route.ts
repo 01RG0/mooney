@@ -17,11 +17,10 @@ export async function PATCH(request: NextRequest) {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { name, username, phone, firstName, lastName, avatarUrl } = body
+  const { name, phone, firstName, lastName, avatarUrl } = body
 
   const update: Record<string, string> = { updatedAt: new Date().toISOString() }
   if (name      !== undefined) update.name      = name
-  if (username  !== undefined) update.username  = username
   if (phone     !== undefined) update.phone     = phone
   if (firstName !== undefined) update.firstName = firstName
   if (lastName  !== undefined) update.lastName  = lastName

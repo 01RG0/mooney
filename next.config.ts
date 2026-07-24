@@ -11,6 +11,16 @@ function localIPs(): string[] {
 const nextConfig: NextConfig = {
   allowedDevOrigins: localIPs(),
   serverExternalPackages: ["firebase-admin", "jwks-rsa", "jose"],
+  images: {
+    remotePatterns: [
+      // ImageKit CDN (avatars, product images, category images)
+      { protocol: "https", hostname: "ik.imagekit.io" },
+      // Google profile photos (Google sign-in avatars)
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      // Firebase Storage (if used)
+      { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+    ],
+  },
 };
 
 export default nextConfig;

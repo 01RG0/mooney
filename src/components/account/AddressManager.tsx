@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import type { AddressProfile } from '@/lib/types'
-import { GeoapifyPicker } from '@/components/map/GeoapifyPicker'
+import { MapPicker } from '@/components/map/MapPicker'
 
 const GOVERNORATES = ['Cairo','Giza','Alexandria','Dakahlia','Red Sea','Beheira','Fayoum','Gharbiya','Ismailia','Menofia','Minya','Qaliubiya','New Valley','Suez','Aswan','Assiut','Beni Suef','Port Said','Damietta','Sharkia','South Sinai','Kafr El-Sheikh','Matrouh','Luxor','Qena','North Sinai','Sohag']
 
@@ -78,27 +78,12 @@ export function AddressManager() {
           <div>
             <button
               type="button"
-              onClick={() => setShowMap((v) => !v)}
+              onClick={() => setShowMap(true)}
               className="text-sm text-rose-400 hover:underline mb-2 flex items-center gap-1"
             >
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              {showMap ? 'Hide map' : 'Find on map'}
+              Find on map
             </button>
-            {showMap && (
-              <GeoapifyPicker
-                className="mb-3"
-                onSelect={(r) => {
-                  setForm((f) => ({
-                    ...f,
-                    address: r.address,
-                    city: r.city,
-                    governorate: r.governorate,
-                    postalCode: r.postalCode ?? f.postalCode,
-                  }))
-                  setShowMap(false)
-                }}
-              />
-            )}
           </div>
           {[
             { key: 'address', label: 'Street Address' },
@@ -153,6 +138,22 @@ export function AddressManager() {
           </div>
         ))}
       </div>
+
+      {showMap && (
+        <MapPicker
+          onClose={() => setShowMap(false)}
+          onConfirm={(r) => {
+            setForm((f) => ({
+              ...f,
+              address: r.address,
+              city: r.city,
+              governorate: r.governorate,
+              postalCode: r.postalCode ?? f.postalCode,
+            }))
+            setShowMap(false)
+          }}
+        />
+      )}
     </div>
   )
 }

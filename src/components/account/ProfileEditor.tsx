@@ -27,12 +27,12 @@ export function ProfileEditor({
   firebaseUser,
 }: {
   uid: string
-  profile: { name?: string; username?: string; email?: string; avatarUrl?: string }
+  profile: { name?: string; phone?: string; email?: string; avatarUrl?: string }
   firebaseUser: User | null
 }) {
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? firebaseUser?.photoURL ?? '')
   const [name, setName] = useState(profile.name ?? firebaseUser?.displayName ?? '')
-  const [username, setUsername] = useState(profile.username ?? '')
+  const [phone, setPhone] = useState(profile.phone ?? '')
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSaved, setProfileSaved] = useState(false)
   const [profileError, setProfileError] = useState('')
@@ -69,7 +69,7 @@ export function ProfileEditor({
       const res = await fetch('/api/account/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, username }),
+        body: JSON.stringify({ name, phone }),
       })
       if (!res.ok) throw new Error()
       if (firebaseUser && name) await updateProfile(firebaseUser, { displayName: name })
@@ -137,7 +137,7 @@ export function ProfileEditor({
         </div>
       </div>
 
-      {/* Name, Username & Email */}
+      {/* Name, Phone & Email */}
       <div className={cardCls}>
         <h3 className="font-display text-lg text-brown-900 mb-4">Profile Details</h3>
         <div className="space-y-4">
@@ -146,8 +146,8 @@ export function ProfileEditor({
             <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} placeholder="Your name" />
           </div>
           <div>
-            <label className={labelCls}>Username</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} className={inputCls} placeholder="e.g. basket_lover" />
+            <label className={labelCls}>Phone Number</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputCls} placeholder="+20 1XX XXX XXXX" autoComplete="tel" />
           </div>
           <div>
             <label className={labelCls}>Email</label>

@@ -15,18 +15,19 @@ const TABS: { id: Tab; label: string }[] = [
 
 export function AccountTabs() {
   const [tab, setTab] = useState<Tab>('profile')
-  const { user } = useAuth()
+  const { user, sessionReady } = useAuth()
   const [profile, setProfile] = useState<Record<string, string | undefined>>({})
   const [profileLoading, setProfileLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
+    // Wait for the __session cookie to be written before hitting API routes
+    if (!user || !sessionReady) return
     fetch('/api/account/profile')
       .then((r) => r.ok ? r.json() : {})
-      .then((data) => setProfile(data))
+      .then((data) => setProfile(data as Record<string, string | undefined>))
       .catch(() => {})
       .finally(() => setProfileLoading(false))
-  }, [user])
+  }, [user, sessionReady])
 
   if (profileLoading) {
     return (

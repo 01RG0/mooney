@@ -97,7 +97,6 @@ export interface AppUser {
   firstName?: string;
   lastName?: string;
   phone?: string;
-  username?: string;
   avatarUrl?: string;
   role: UserRole;
   referral?: string;
