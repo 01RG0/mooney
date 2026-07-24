@@ -73,13 +73,14 @@ export function Header() {
           {!loading && !user && (
             <Link
               href="/login"
-              aria-label="Sign in"
-              className="ml-1 inline-flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-rose-300 to-brown-700 ring-2 ring-cream"
+              className="ml-1 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-rose-300 to-brown-700 px-4 py-2 text-sm font-medium text-white ring-2 ring-cream transition-opacity hover:opacity-90"
             >
-              <svg viewBox="0 0 24 24" className="h-4 w-4 text-white" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <circle cx="12" cy="8" r="4" />
                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
               </svg>
+              <span className="hidden sm:inline">Log in / Sign up</span>
+              <span className="sm:hidden">Log in</span>
             </Link>
           )}
           <button
