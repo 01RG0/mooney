@@ -1,37 +1,55 @@
-import productsData from "@/lib/data/products.json";
-import categoriesData from "@/lib/data/categories.json";
-import type { Category, Product } from "@/lib/types";
+import type { Category, Product } from '@/lib/types'
 
-/*
- * Data-access layer. Pages and components import ONLY from here — never from the
- * JSON directly. Today these read bundled seed data; to move to a real Node/DB
- * backend, swap each body for a `fetch(process.env.API_URL + ...)` or ORM call.
- * The async signatures already match, so callers won't change.
- */
-
-const products = productsData as Product[];
-const categories = categoriesData as Category[];
+const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
 
 export async function getAllProducts(): Promise<Product[]> {
-  return products;
+  try {
+    const res = await fetch(`${base}/api/products`, { cache: 'no-store' })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  return products.find((p) => p.slug === slug) ?? null;
+  try {
+    const res = await fetch(`${base}/api/products/${slug}`, { cache: 'no-store' })
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
 
 export async function getCategories(): Promise<Category[]> {
-  return categories;
+  try {
+    const res = await fetch(`${base}/api/categories`, { cache: 'no-store' })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
 
 export async function getNewArrivals(limit = 6): Promise<Product[]> {
-  return products.filter((p) => p.isNew).slice(0, limit);
+  try {
+    const res = await fetch(`${base}/api/products?isNew=true&limit=${limit}`, { cache: 'no-store' })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
 
 export async function getRelatedProducts(slug: string, limit = 4): Promise<Product[]> {
-  const current = products.find((p) => p.slug === slug);
-  if (!current) return [];
-  return products
-    .filter((p) => p.category === current.category && p.slug !== slug)
-    .slice(0, limit);
+  try {
+    const current = await getProductBySlug(slug)
+    if (!current) return []
+    const res = await fetch(`${base}/api/products?category=${current.category}&exclude=${slug}&limit=${limit}`, { cache: 'no-store' })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
