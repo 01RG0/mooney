@@ -21,7 +21,7 @@ const NAV = [
 export function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const { user, loading, sessionReady } = useAuth();
   const router = useRouter();
 
   const isActive = (href: string) =>
@@ -64,6 +64,7 @@ export function Header() {
           {!loading && user && (
             <UserMenu
               user={user}
+              sessionReady={sessionReady}
               onLogout={async () => {
                 await signOut(auth);
                 router.replace("/login");
@@ -120,13 +121,16 @@ export function Header() {
 
 function UserMenu({
   user,
+  sessionReady,
   onLogout,
 }: {
   user: { displayName?: string | null; email?: string | null; photoURL?: string | null };
+  sessionReady: boolean;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -168,14 +172,30 @@ function UserMenu({
           </div>
 
           {/* Actions */}
-          <Link
-            href="/account"
-            onClick={() => setOpen(false)}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              if (sessionReady) {
+                router.push("/account");
+              } else {
+                // Cookie still being written — wait then navigate
+                const interval = setInterval(() => {
+                  if (document.cookie.includes("__session")) {
+                    clearInterval(interval);
+                    router.push("/account");
+                  }
+                }, 50);
+                // Hard fallback after 3s regardless
+                setTimeout(() => { clearInterval(interval); router.push("/account"); }, 3000);
+              }
+            }}
             className="flex w-full items-center gap-3 px-4 py-3 text-sm text-brown-900 transition-colors hover:bg-rose-400/10"
           >
             <SettingsIcon className="h-4 w-4 shrink-0 text-brown-700" />
             Profile settings
-          </Link>
+            {!sessionReady && <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-rose-300" />}
+          </button>
           <button
             type="button"
             onClick={() => { setOpen(false); onLogout(); }}
