@@ -6,9 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { useAuth } from "@/context/AuthContext";
+import { trackCartEvent } from "@/lib/analytics";
 import type { CartItem } from "@/lib/types";
 
 interface AddItemInput {
@@ -33,37 +37,118 @@ interface CartContextValue {
 }
 
 const STORAGE_KEY = "mermaid-crafted-cart:v1";
+// Debounce Firestore writes so rapid add/remove doesn't hammer the DB
+const SYNC_DEBOUNCE_MS = 1500;
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
   const [isHydrated, setIsHydrated] = useState(false);
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track whether the current items were restored from Firestore so we don't
+  // immediately overwrite a just-restored cart with an empty localStorage state.
+  const restoredFromCloud = useRef(false);
 
-  // Hydrate from localStorage once on mount. setState here is intentional —
-  // localStorage is an external system we read from exactly once on mount.
+  // ── Step 1: hydrate from localStorage on mount ──────────────────────────
   useEffect(() => {
     let saved: CartItem[] = [];
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) saved = JSON.parse(raw) as CartItem[];
     } catch {
-      // Corrupt or unavailable storage — start empty.
+      // corrupt storage — start empty
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems(saved);
     setIsHydrated(true);
   }, []);
 
-  // Persist after hydration so we never clobber saved state with the initial [].
+  // ── Step 2: when user logs in, merge their cloud cart ───────────────────
+  // If localStorage is empty and Firestore has a saved cart, restore it.
+  // If localStorage already has items, keep those (user added items before logging in).
+  useEffect(() => {
+    if (!isHydrated || !user) return;
+
+    async function restoreCloudCart() {
+      try {
+        const db = getFirestore();
+        const ref = doc(db, "wishlists", user!.uid);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return;
+
+        const cloudItems = (snap.data()?.items ?? []) as CartItem[];
+        if (cloudItems.length === 0) return;
+
+        setItems((current) => {
+          if (current.length > 0) {
+            // Local cart wins — merge: add cloud items that aren't already present
+            const merged = [...current];
+            for (const cloudItem of cloudItems) {
+              if (!merged.find((i) => i.id === cloudItem.id)) {
+                merged.push(cloudItem);
+              }
+            }
+            restoredFromCloud.current = merged.length !== current.length;
+            return merged;
+          }
+          // No local cart — restore cloud cart entirely
+          restoredFromCloud.current = true;
+          return cloudItems;
+        });
+      } catch {
+        // non-fatal — cloud restore is best-effort
+      }
+    }
+
+    void restoreCloudCart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated, user?.uid]);
+
+  // ── Step 3: persist to localStorage after hydration ─────────────────────
   useEffect(() => {
     if (!isHydrated) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
-      // Ignore quota / privacy-mode failures.
+      // ignore quota / privacy-mode failures
     }
   }, [items, isHydrated]);
+
+  // ── Step 4: sync to Firestore (debounced) for logged-in users ───────────
+  useEffect(() => {
+    if (!isHydrated || !user) return;
+
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+
+    syncTimer.current = setTimeout(async () => {
+      try {
+        const db = getFirestore();
+        const ref = doc(db, "wishlists", user.uid);
+        if (items.length === 0) {
+          // Cart is empty — remove the cloud copy so we don't restore an empty cart
+          await deleteDoc(ref);
+        } else {
+          const sub = items.reduce((s, i) => s + i.price * i.quantity, 0);
+          await setDoc(ref, {
+            uid: user.uid,
+            items,
+            itemCount: items.reduce((n, i) => n + i.quantity, 0),
+            subtotal: sub,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      } catch {
+        // non-fatal — sync is best-effort
+      }
+    }, SYNC_DEBOUNCE_MS);
+
+    return () => {
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+    };
+  }, [items, isHydrated, user]);
+
+  // ── Cart mutations ───────────────────────────────────────────────────────
 
   const addItem = useCallback((input: AddItemInput) => {
     const lineId = `${input.productId}::${input.color}`;
@@ -89,10 +174,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
         },
       ];
     });
+    void trackCartEvent("add_to_cart", {
+      productId: input.productId,
+      productName: input.name,
+      slug: input.slug,
+      price: input.price,
+      quantity: qty,
+      color: input.color,
+    });
   }, []);
 
   const removeItem = useCallback((lineId: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== lineId));
+    setItems((prev) => {
+      const item = prev.find((i) => i.id === lineId);
+      if (item) {
+        void trackCartEvent("remove_from_cart", {
+          productId: item.productId,
+          productName: item.name,
+          slug: item.slug,
+          price: item.price,
+          quantity: item.quantity,
+          color: item.color,
+        });
+      }
+      return prev.filter((i) => i.id !== lineId);
+    });
   }, []);
 
   const updateQuantity = useCallback((lineId: string, quantity: number) => {
@@ -103,7 +209,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const clear = useCallback(() => setItems([]), []);
+  // clear() is called after a successful order — also wipes the cloud copy immediately
+  const clear = useCallback(() => {
+    setItems([]);
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    // Fire-and-forget immediate cloud wipe (don't wait for debounce)
+    const currentUser = user;
+    if (currentUser) {
+      const db = getFirestore();
+      deleteDoc(doc(db, "wishlists", currentUser.uid)).catch(() => {});
+    }
+  }, [user]);
 
   const count = useMemo(
     () => items.reduce((n, i) => n + i.quantity, 0),

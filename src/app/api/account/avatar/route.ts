@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
     url = `/uploads/${filename}`
   }
 
-  await getAdminDb().collection('users').doc(user.uid).update({ avatarUrl: url })
+  await getAdminDb().collection('users').doc(user.uid).set(
+    { avatarUrl: url, updatedAt: new Date().toISOString() },
+    { merge: true },
+  )
   return Response.json({ url })
 }

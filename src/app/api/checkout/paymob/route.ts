@@ -78,15 +78,20 @@ export async function POST(request: NextRequest) {
   const { token: paymentKey } = await pkRes.json()
 
   // Create internal order record
+  const shippingCost = serverTotal - subtotal
   const now = new Date().toISOString()
   const orderId = 'MC-' + Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(Math.floor(Math.random() * 32))).join('')
   await getAdminDb().collection('orders').doc(orderId).set({
     id: orderId,
     userId: user.uid,
+    userEmail: user.email,
     email: user.email ?? shippingDetails.email,
     items,
     shippingDetails,
+    subtotal,
+    shippingCost,
     total: serverTotal,
+    amountCents,
     status: 'pending-payment',
     paymentMethod: 'paymob',
     paymobOrderId: String(paymobOrderId),

@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -29,9 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-      setLoading(false);
-
       if (firebaseUser) {
         try {
           const idToken = await firebaseUser.getIdToken();
@@ -46,12 +44,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
       }
+
+      // Protected pages are authorized by the HTTP-only session cookie, not by
+      // Firebase's client-side state. Keep account navigation unavailable until
+      // the cookie request above has finished so it cannot race the proxy.
+      setUser(firebaseUser);
+      setLoading(false);
     });
     return unsubscribe;
   }, []);
 
+  const value = useMemo(() => ({ user, loading }), [user, loading]);
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
