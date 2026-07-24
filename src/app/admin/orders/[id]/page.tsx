@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { StatusSelector } from "./StatusSelector";
+import { MarkAsPaidButton } from "./MarkAsPaidButton";
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ interface Order {
   createdAt: string;
   items: OrderItem[];
   shippingDetails: ShippingDetails;
+  paymentPhone?: string;
 }
 
 async function getOrder(id: string): Promise<Order | null> {
@@ -87,6 +89,12 @@ export default async function OrderDetailPage({
             £{order.total.toFixed(2)}
           </p>
           <StatusSelector orderId={order.id} currentStatus={order.status} />
+          {order.status === "pending-manual-confirmation" && (
+            <MarkAsPaidButton
+              orderId={order.id}
+              paymentPhone={order.paymentPhone}
+            />
+          )}
         </div>
       </div>
 

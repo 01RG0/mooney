@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const user = await getSessionUser()
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { items, shippingDetails, total } = await request.json()
+    const { items, shippingDetails, total, paymentMethod, paymentPhone } = await request.json()
 
     const orderId = 'MC-' + Array.from({ length: 6 }, () =>
       'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'.charAt(Math.floor(Math.random() * 32))
@@ -23,9 +23,11 @@ export async function POST(request: NextRequest) {
       items,
       shippingDetails,
       total,
-      status: 'pending',
+      status: paymentMethod === 'orange-cash' ? 'pending-manual-confirmation' : 'pending',
       createdAt: now,
       updatedAt: now,
+      ...(paymentMethod && { paymentMethod }),
+      ...(paymentPhone && { paymentPhone }),
     }
 
     await getAdminDb().collection('orders').doc(orderId).set(order)

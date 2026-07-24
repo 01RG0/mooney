@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import { computeShipping } from "@/lib/cart";
-import { submitOrder, type OrderConfirmation } from "@/lib/repository/orders";
+import { type OrderConfirmation } from "@/lib/repository/orders";
 import { ArrowLeftIcon, CheckIcon } from "@/components/ui/icons";
 
 type Fields = {
@@ -49,9 +49,19 @@ export default function CheckoutPage() {
   const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(
     null,
   );
+  const [paymentMethod, setPaymentMethod] = useState<"orange-cash">("orange-cash");
+  const [paymentPhone, setPaymentPhone] = useState("");
+  const [businessNumber, setBusinessNumber] = useState("");
 
   const shipping = computeShipping(subtotal);
   const total = subtotal + shipping;
+
+  useEffect(() => {
+    fetch("/api/checkout/orange-cash-number")
+      .then((r) => r.json())
+      .then((d) => setBusinessNumber(d.number ?? ""))
+      .catch(() => {});
+  }, []);
 
   function validate(): boolean {
     const next: Partial<Record<keyof Fields, string>> = {};
@@ -71,7 +81,19 @@ export default function CheckoutPage() {
     setStatus("submitting");
     setOrderError("");
     try {
-      const result = await submitOrder(items, fields, total);
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items,
+          shippingDetails: fields,
+          total,
+          paymentMethod: "orange-cash",
+          paymentPhone,
+        }),
+      });
+      if (!res.ok) throw new Error("Order submission failed");
+      const result = await res.json();
       clear();
       setConfirmation(result);
     } catch {
@@ -241,14 +263,103 @@ export default function CheckoutPage() {
               autoComplete="country-name"
             />
           </div>
-          <p className="mt-4 text-xs text-brown-700">
-            This is a demo checkout — no payment is taken and no card details are
-            collected.
-          </p>
+        </div>
+
+        {/* Payment method */}
+        <div className="lg:col-span-2">
+          <h2 className="font-display text-xl font-semibold text-brown-900 mb-4">
+            Payment Method
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {/* Paymob — coming soon */}
+            <div className="relative cursor-not-allowed rounded-2xl border-2 border-brown-900/10 bg-white/10 p-4 opacity-50 select-none">
+              <span className="absolute right-2 top-2 rounded-full bg-brown-900/10 px-2 py-0.5 text-xs text-brown-700">
+                Coming soon
+              </span>
+              <svg
+                className="h-6 w-6 text-brown-700 mb-2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="1" y="4" width="22" height="16" rx="2" />
+                <line x1="1" y1="10" x2="23" y2="10" />
+              </svg>
+              <p className="font-medium text-sm text-brown-900">Pay by Card</p>
+              <p className="text-xs text-brown-700 mt-0.5">
+                Secure payment via Paymob
+              </p>
+            </div>
+
+            {/* Orange Cash */}
+            <div
+              onClick={() => setPaymentMethod("orange-cash")}
+              className={`cursor-pointer rounded-2xl border-2 p-4 transition-all ${paymentMethod === "orange-cash" ? "border-rose-400 bg-rose-400/5" : "border-brown-900/15 bg-white/20 hover:border-brown-900/30"}`}
+            >
+              <div className="mb-2 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white text-xs font-bold">
+                E£
+              </div>
+              <p className="font-medium text-sm text-brown-900">Orange Cash</p>
+              <p className="text-xs text-brown-700 mt-0.5">
+                Transfer to our number
+              </p>
+              {paymentMethod === "orange-cash" && (
+                <div className="mt-3 space-y-2">
+                  {businessNumber && (
+                    <p className="text-xs text-brown-900 font-medium">
+                      Transfer to:{" "}
+                      <span className="text-rose-500">{businessNumber}</span>
+                    </p>
+                  )}
+                  <input
+                    type="tel"
+                    value={paymentPhone}
+                    onChange={(e) => setPaymentPhone(e.target.value)}
+                    placeholder="Your Orange Cash number"
+                    className="w-full rounded-xl border border-brown-900/15 bg-white/60 px-3 py-2 text-xs text-brown-900 focus:outline-none focus:border-rose-400/60"
+                  />
+                  <p className="text-xs text-brown-700">
+                    Order confirmed after we verify transfer.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* COD — disabled */}
+            <div className="relative cursor-not-allowed rounded-2xl border-2 border-brown-900/10 bg-white/10 p-4 opacity-50 select-none">
+              <span className="absolute right-2 top-2 rounded-full bg-brown-900/10 px-2 py-0.5 text-xs text-brown-700">
+                Coming soon
+              </span>
+              <svg
+                className="h-6 w-6 text-brown-700 mb-2"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <path d="M22 10H2" />
+                <path d="M7 15h.01M11 15h2" />
+              </svg>
+              <p className="font-medium text-sm text-brown-900">
+                Cash on Delivery
+              </p>
+              <p className="text-xs text-brown-700 mt-0.5">
+                Pay when order arrives
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Order summary */}
-        <aside className="h-fit rounded-3xl bg-cream/80 p-6 lg:sticky lg:top-24">
+        <aside className="h-fit rounded-3xl bg-cream/80 p-6 lg:sticky lg:top-24 lg:col-start-2 lg:row-start-1">
           <h2 className="font-display text-xl font-semibold text-brown-900">
             Order summary
           </h2>
@@ -311,9 +422,7 @@ export default function CheckoutPage() {
             disabled={status === "submitting"}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-400 px-7 py-3.5 text-base font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-60"
           >
-            {status === "submitting"
-              ? "Placing order…"
-              : `Place order · ${formatPrice(total)}`}
+            {status === "submitting" ? "Placing order…" : `Place Order · ${formatPrice(total)}`}
           </button>
         </aside>
       </form>

@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { BagIcon, CheckIcon } from "@/components/ui/icons";
+import { ViewerCounter } from '@/components/product/ViewerCounter'
 
 /**
  * Premium, Apple-ad style product detail. The whole frame IS the soft rose
@@ -25,6 +26,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const { addItem } = useCart();
   const [colorIndex, setColorIndex] = useState(0);
   const [added, setAdded] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
 
   const color = product.colors[colorIndex]?.name ?? "Default";
 
@@ -41,6 +43,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }
+
+  const displayImage = product.images?.length ? product.images[activeIndex] ?? product.image : product.image
 
   return (
     <div className="flex justify-center">
@@ -63,7 +67,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
           {/* hero product — floating, no box around it */}
           <div className="flex h-[300px] items-center justify-center px-2 sm:h-[330px] lg:h-[460px]">
             <Image
-              src={product.image}
+              src={displayImage}
               alt={product.name}
               width={620}
               height={620}
@@ -72,6 +76,22 @@ export function ProductDetailClient({ product }: { product: Product }) {
               style={{ animation: "floatY 5s ease-in-out infinite" }}
             />
           </div>
+          {(product.images?.length ?? 0) > 1 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {product.images!.map((img, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveIndex(i)}
+                  className={`h-12 w-12 overflow-hidden rounded-xl border-2 transition-all ${
+                    i === activeIndex ? 'border-rose-400' : 'border-transparent opacity-60 hover:opacity-90'
+                  }`}
+                >
+                  <img src={img} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* ── Colour selector — rounded-square tiles, evenly spread ── */}
           {product.colors.length > 0 && (
@@ -126,6 +146,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
           <h1 className="mt-1.5 text-[32px] font-bold leading-[1.05] tracking-tight text-[#111111] sm:text-[36px] lg:text-[46px]">
             {product.name}
           </h1>
+
+          <div className="mt-2">
+            <ViewerCounter product={product} />
+          </div>
 
           <p className="mt-3 text-[15px] leading-[1.5] text-[#9A9A9A] lg:mt-5 lg:max-w-md lg:text-base">
             {product.description}

@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { uploadImage } from '@/lib/imagekit'
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -17,6 +18,12 @@ export default function NewProductPage() {
     stock: "0",
   });
   const [saving, setSaving] = useState(false);
+  const [images, setImages] = useState<string[]>([])
+  const [mainImageIndex, setMainImageIndex] = useState(0)
+  const [viewerEnabled, setViewerEnabled] = useState(false)
+  const [viewerMin, setViewerMin] = useState(8)
+  const [viewerMax, setViewerMax] = useState(24)
+  const imgRef = useRef<HTMLInputElement>(null)
 
   function handleChange(
     e: React.ChangeEvent<
@@ -55,6 +62,9 @@ export default function NewProductPage() {
           price: parseFloat(form.price),
           stock: parseInt(form.stock),
           details: form.details.split("\n").filter(Boolean),
+          images,
+          mainImageIndex,
+          viewerCount: { enabled: viewerEnabled, min: viewerMin, max: viewerMax },
         }),
       });
       if (res.ok) router.push("/admin/products");
@@ -132,6 +142,95 @@ export default function NewProductPage() {
             onChange={handleChange}
             className={inputCls}
           />
+        </div>
+        <div>
+          <label className={labelCls}>Product Images</label>
+          <button
+            type="button"
+            onClick={() => imgRef.current?.click()}
+            className="rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity"
+          >
+            Upload Image
+          </button>
+          <input
+            ref={imgRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0]
+              if (!f) return
+              const url = await uploadImage(f, 'products')
+              setImages((prev) => [...prev, url])
+              e.target.value = ''
+            }}
+          />
+          {images.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {images.map((url, i) => (
+                <div key={i} className="relative h-16 w-16">
+                  <img src={url} alt="" className="h-full w-full rounded-xl object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setMainImageIndex(i)}
+                    title="Set as main"
+                    className={`absolute bottom-0 left-0 rounded-br-xl rounded-tl-xl px-1 text-xs ${
+                      i === mainImageIndex
+                        ? 'bg-rose-400 text-white'
+                        : 'bg-black/30 text-white hover:bg-rose-400'
+                    }`}
+                  >
+                    ★
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImages((prev) => prev.filter((_, j) => j !== i))
+                      if (mainImageIndex >= i && mainImageIndex > 0) setMainImageIndex((p) => p - 1)
+                    }}
+                    className="absolute right-0 top-0 rounded-bl-xl rounded-tr-xl bg-black/40 px-1 text-xs text-white hover:bg-rose-500"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div>
+          <label className="flex items-center gap-2 text-sm text-brown-700 font-sans">
+            <input
+              type="checkbox"
+              checked={viewerEnabled}
+              onChange={(e) => setViewerEnabled(e.target.checked)}
+              className="accent-rose-400"
+            />
+            Enable viewer counter
+          </label>
+          {viewerEnabled && (
+            <div className="mt-2 flex gap-4">
+              <div>
+                <label className={labelCls}>Min viewers</label>
+                <input
+                  type="number"
+                  value={viewerMin}
+                  onChange={(e) => setViewerMin(Number(e.target.value))}
+                  className={inputCls}
+                  min={1}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Max viewers</label>
+                <input
+                  type="number"
+                  value={viewerMax}
+                  onChange={(e) => setViewerMax(Number(e.target.value))}
+                  className={inputCls}
+                  min={1}
+                />
+              </div>
+            </div>
+          )}
         </div>
         <div>
           <label className={labelCls}>Description</label>

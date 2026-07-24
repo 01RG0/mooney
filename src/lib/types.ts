@@ -24,6 +24,9 @@ export interface Product {
   colors: ColorOption[];
   maker: string;
   isNew?: boolean;
+  images?: string[];
+  mainImageIndex?: number;
+  viewerCount?: { min: number; max: number; enabled: boolean };
 }
 
 export interface CartItem {
@@ -43,7 +46,9 @@ export type OrderStatus =
   | "confirmed"
   | "shipped"
   | "delivered"
-  | "cancelled";
+  | "cancelled"
+  | "pending-payment"
+  | "pending-manual-confirmation";
 
 export interface Order {
   id: string;
@@ -55,6 +60,10 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
+  paymentMethod?: "paymob" | "orange-cash" | "cod";
+  paymentPhone?: string;
+  paymobOrderId?: string;
+  paymobTransactionId?: string;
 }
 
 export interface ShippingDetails {
@@ -68,10 +77,24 @@ export interface ShippingDetails {
 
 export type UserRole = "customer" | "admin";
 
+export interface AddressProfile {
+  id: string
+  label: string
+  fullName: string
+  phone: string
+  address: string
+  governorate: string
+  city: string
+  postalCode?: string
+  coordinates?: { lat: number; lng: number }
+  isDefault: boolean
+}
+
 export interface AppUser {
   uid: string;
   email: string;
   displayName?: string;
   role: UserRole;
   createdAt: string;
+  addressProfiles?: AddressProfile[];
 }

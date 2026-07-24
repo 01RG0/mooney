@@ -10,6 +10,7 @@ function localIPs(): string[] {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: localIPs(),
+  serverExternalPackages: ["firebase-admin", "jwks-rsa", "jose"],
 };
 
 export default nextConfig;
