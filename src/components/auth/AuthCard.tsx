@@ -14,6 +14,7 @@ import {
   setPersistence,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { getFirestore, doc, setDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthContext";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ArrowRightIcon, CheckIcon } from "@/components/ui/icons";
@@ -244,6 +245,9 @@ export function AuthCard() {
     email: string,
     password: string,
     confirm: string,
+    name: string,
+    username: string,
+    referral: string,
   ): Promise<boolean> {
     setAuthError("");
 
@@ -263,7 +267,19 @@ export function AuthCard() {
     setSubmitting(true);
     skipRedirect.current = true;
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      try {
+        const db = getFirestore();
+        await setDoc(doc(db, "users", credential.user.uid), {
+          name,
+          username,
+          referral,
+          email,
+          createdAt: new Date().toISOString(),
+        });
+      } catch {
+        // profile save is best-effort; does not block signup
+      }
       return true;
     } catch (err: unknown) {
       skipRedirect.current = false;
@@ -326,8 +342,8 @@ export function AuthCard() {
             ) : (
               <SignupFields
                 submitting={submitting}
-                onSubmit={async (email, password, confirm) => {
-                  const ok = await handleSignup(email, password, confirm);
+                onSubmit={async (email, password, confirm, name, username, referral) => {
+                  const ok = await handleSignup(email, password, confirm, name, username, referral);
                   if (ok) setMode("pick-avatar");
                 }}
               />
@@ -528,7 +544,7 @@ function SignupFields({
   onSubmit,
 }: {
   submitting: boolean;
-  onSubmit: (email: string, password: string, confirm: string) => void;
+  onSubmit: (email: string, password: string, confirm: string, name: string, username: string, referral: string) => void;
 }) {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -623,7 +639,7 @@ function SignupFields({
         size="lg"
         className="mt-2 w-full"
         disabled={submitting}
-        onClick={() => onSubmit(email, password, confirm)}
+        onClick={() => onSubmit(email, password, confirm, name, username, referral)}
       >
         {submitting ? (
           <Spinner />

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
@@ -40,9 +41,11 @@ const FIELD_LABELS: Record<keyof Fields, string> = {
 
 export default function CheckoutPage() {
   const { items, subtotal, clear, isHydrated } = useCart();
+  const { user, loading: authLoading } = useAuth();
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>({});
   const [status, setStatus] = useState<"idle" | "submitting">("idle");
+  const [orderError, setOrderError] = useState("");
   const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(
     null,
   );
@@ -66,10 +69,16 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!validate()) return;
     setStatus("submitting");
-    const result = await submitOrder(items, fields, total);
-    clear();
-    setConfirmation(result);
-    setStatus("idle");
+    setOrderError("");
+    try {
+      const result = await submitOrder(items, fields, total);
+      clear();
+      setConfirmation(result);
+    } catch {
+      setOrderError("Something went wrong placing your order. Please try again.");
+    } finally {
+      setStatus("idle");
+    }
   }
 
   function update(key: keyof Fields, value: string) {
@@ -114,10 +123,28 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!isHydrated) {
+  if (!isHydrated || authLoading) {
     return (
       <Container className="py-16">
         <div className="h-40 animate-pulse rounded-3xl bg-cream/60" />
+      </Container>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Container className="py-20">
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 text-center">
+          <h1 className="font-display text-3xl font-semibold text-brown-900">
+            Sign in to check out
+          </h1>
+          <p className="text-brown-700">
+            You need an account to place an order.
+          </p>
+          <ButtonLink href="/login?from=/checkout" size="lg" className="mt-2">
+            Sign in to continue
+          </ButtonLink>
+        </div>
       </Container>
     );
   }
@@ -276,6 +303,9 @@ export default function CheckoutPage() {
             </div>
           </dl>
 
+          {orderError && (
+            <p className="mt-3 text-sm text-rose-500 text-center">{orderError}</p>
+          )}
           <button
             type="submit"
             disabled={status === "submitting"}

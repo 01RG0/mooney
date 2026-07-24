@@ -6,15 +6,11 @@ import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { ArrowLeftIcon } from "@/components/ui/icons";
 import {
-  getAllProducts,
   getProductBySlug,
   getRelatedProducts,
 } from "@/lib/repository/products";
 
-export async function generateStaticParams() {
-  const products = await getAllProducts();
-  return products.map((p) => ({ slug: p.slug }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({
   params,

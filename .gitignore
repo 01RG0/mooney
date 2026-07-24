@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+playwright/.auth/
+playwright-report/
+test-results/
+
+__tasks/task-kilo.txt
+__tasks/task-freebuff.txt
+__tasks/task-codex.txt
+__tasks/task-agy.txt
+/src/__tests__

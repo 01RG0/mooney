@@ -1,11 +1,5 @@
 import type { CartItem } from "@/lib/types";
 
-/*
- * Order submission lives behind this function so the checkout page never talks to
- * a transport directly. For now it fabricates a confirmation; later this becomes a
- * `POST` to a Node route handler (`/api/orders`) that persists the order.
- */
-
 export interface ShippingDetails {
   fullName: string;
   email: string;
@@ -27,21 +21,15 @@ export async function submitOrder(
   details: ShippingDetails,
   total: number,
 ): Promise<OrderConfirmation> {
-  // Simulate a round-trip so the UI's pending state is real.
-  await new Promise((resolve) => setTimeout(resolve, 900));
+  const res = await fetch("/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items, shippingDetails: details, total }),
+  });
 
-  const orderId =
-    "MC-" +
-    Array.from({ length: 6 }, () =>
-      "ABCDEFGHJKLMNPQRSTUVWXYZ23456789".charAt(
-        Math.floor(Math.random() * 32),
-      ),
-    ).join("");
+  if (!res.ok) {
+    throw new Error("Order submission failed");
+  }
 
-  return {
-    orderId,
-    total,
-    email: details.email,
-    estimatedDelivery: "5–7 business days",
-  };
+  return res.json();
 }

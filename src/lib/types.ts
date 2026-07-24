@@ -37,3 +37,41 @@ export interface CartItem {
   color: string;
   quantity: number;
 }
+
+export type OrderStatus =
+  | "pending"
+  | "confirmed"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
+
+export interface Order {
+  id: string;
+  userId: string;
+  email: string;
+  items: CartItem[];
+  shippingDetails: ShippingDetails;
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ShippingDetails {
+  fullName: string;
+  email: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+export type UserRole = "customer" | "admin";
+
+export interface AppUser {
+  uid: string;
+  email: string;
+  displayName?: string;
+  role: UserRole;
+  createdAt: string;
+}

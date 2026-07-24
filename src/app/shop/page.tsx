@@ -2,6 +2,8 @@ import { ShopClient } from "@/components/shop/ShopClient";
 import { getAllProducts, getCategories } from "@/lib/repository/products";
 import type { Metadata } from "next";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Shop — Meromade",
   description: "Browse hand-made baskets, chiffon florals, stone art and home décor.",
