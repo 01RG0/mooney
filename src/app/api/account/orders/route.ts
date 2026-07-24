@@ -10,9 +10,14 @@ export async function GET() {
   const snap = await getAdminDb()
     .collection('orders')
     .where('userId', '==', user.uid)
-    .orderBy('createdAt', 'desc')
     .get()
 
-  const orders = snap.docs.map((d) => d.data())
+  const orders = snap.docs
+    .map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => {
+      const ta = (a as Record<string, string>).createdAt ?? ''
+      const tb = (b as Record<string, string>).createdAt ?? ''
+      return tb.localeCompare(ta)
+    })
   return Response.json(orders)
 }

@@ -3,10 +3,7 @@ import { Container } from "@/components/ui/Container";
 import { ArrowRightIcon } from "@/components/ui/icons";
 
 const ARTISTS = [
-  { name: "Elara", craft: "Baskets" },
-  { name: "Maya", craft: "Florals" },
-  { name: "Kai", craft: "Stone Art" },
-  { name: "Liam", craft: "Leatherwork" },
+  { name: "Mayar", craft: "Baskets" },
 ];
 
 export function InfoBand() {
@@ -39,13 +36,18 @@ export function InfoBand() {
             <h3 className="mt-4 font-display text-xl font-semibold text-blush-100">
               Meet our featured artisans each month.
             </h3>
-            <div className="mt-6 flex items-center gap-3">
+            <a
+              href="https://www.instagram.com/mer0made/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 flex items-center gap-3 group"
+            >
               <span className="h-11 w-11 rounded-full bg-gradient-to-br from-rose-300 to-brown-700 ring-2 ring-brown-900" />
               <div className="text-sm">
-                <p className="font-medium text-blush-100">Artist of the Month</p>
-                <p className="text-blush-100/60">Elara · Baskets</p>
+                <p className="font-medium text-blush-100 group-hover:underline">Artist of the Month</p>
+                <p className="text-blush-100/60">mer0made</p>
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Community */}
