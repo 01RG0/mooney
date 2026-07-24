@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ProfileEditor } from './ProfileEditor'
 import { AddressManager } from './AddressManager'
 import { OrdersHistory } from './OrdersHistory'
@@ -13,15 +13,30 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'addresses', label: 'Addresses' },
 ]
 
-export function AccountTabs({
-  uid,
-  profile,
-}: {
-  uid: string
-  profile: Record<string, string | undefined>
-}) {
+export function AccountTabs() {
   const [tab, setTab] = useState<Tab>('profile')
   const { user } = useAuth()
+  const [profile, setProfile] = useState<Record<string, string | undefined>>({})
+  const [profileLoading, setProfileLoading] = useState(true)
+
+  useEffect(() => {
+    if (!user) return
+    fetch('/api/account/profile')
+      .then((r) => r.ok ? r.json() : {})
+      .then((data) => setProfile(data))
+      .catch(() => {})
+      .finally(() => setProfileLoading(false))
+  }, [user])
+
+  if (profileLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-32 animate-pulse rounded-3xl bg-white/30" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -41,7 +56,7 @@ export function AccountTabs({
         ))}
       </div>
 
-      {tab === 'profile' && <ProfileEditor uid={uid} profile={profile} firebaseUser={user} />}
+      {tab === 'profile' && <ProfileEditor uid={user!.uid} profile={profile} firebaseUser={user} />}
       {tab === 'orders' && <OrdersHistory />}
       {tab === 'addresses' && <AddressManager />}
     </div>

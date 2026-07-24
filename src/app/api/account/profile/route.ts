@@ -4,6 +4,14 @@ import { getSessionUser } from '@/lib/session'
 
 export const dynamic = 'force-dynamic'
 
+export async function GET() {
+  const user = await getSessionUser()
+  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const snap = await getAdminDb().collection('users').doc(user.uid).get()
+  return Response.json(snap.exists ? snap.data() : {})
+}
+
 export async function PATCH(request: NextRequest) {
   const user = await getSessionUser()
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })

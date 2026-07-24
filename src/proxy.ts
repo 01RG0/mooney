@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = ["/checkout", "/account"];
+const PROTECTED_ROUTES = ["/checkout"];
 const GUEST_ROUTES = ["/login"];
 const ADMIN_PAGE_PREFIX = "/admin";
 const ADMIN_API_PREFIX = "/api/admin";
@@ -45,7 +45,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/checkout/:path*",
-    "/account/:path*",
     "/login",
     "/admin/:path*",
     "/api/admin/:path*",
