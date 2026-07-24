@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Container } from "@/components/ui/Container";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { SearchIcon } from "@/components/ui/icons";
 import type { Category, Product } from "@/lib/types";
+import { trackSearch } from "@/lib/analytics";
 
 export function ShopClient({
   products,
@@ -17,6 +18,19 @@ export function ShopClient({
 }) {
   const [active, setActive] = useState(initialCategory);
   const [query, setQuery] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce search tracking — fires 1 s after the user stops typing
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!query.trim()) return;
+    searchTimer.current = setTimeout(() => {
+      void trackSearch(query.trim());
+    }, 1000);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

@@ -94,7 +94,122 @@ export interface AppUser {
   uid: string;
   email: string;
   displayName?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  username?: string;
+  avatarUrl?: string;
   role: UserRole;
+  referral?: string;
   createdAt: string;
   addressProfiles?: AddressProfile[];
+}
+
+// ─── Product (extended with stock + analytics) ────────────────────────────
+
+export interface ProductStock {
+  stock: number;
+  reservedStock?: number; // items in active pending orders
+}
+
+// ─── Reviews ──────────────────────────────────────────────────────────────
+
+export interface Review {
+  id: string;
+  productId: string;
+  productSlug: string;
+  userId: string;
+  userDisplayName: string;
+  userAvatarUrl?: string;
+  orderId: string;        // must have a delivered order for this product
+  rating: number;         // 1–5
+  title?: string;
+  body: string;
+  createdAt: string;
+  updatedAt?: string;
+  approved: boolean;      // admin-moderated
+}
+
+// ─── Wishlist ─────────────────────────────────────────────────────────────
+
+export interface Wishlist {
+  uid: string;            // document ID = user uid
+  productIds: string[];
+  updatedAt: string;
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | "order_confirmed"
+  | "order_shipped"
+  | "order_delivered"
+  | "order_cancelled"
+  | "back_in_stock"
+  | "promo";
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  read: boolean;
+  link?: string;
+  createdAt: string;
+}
+
+// ─── Coupons ──────────────────────────────────────────────────────────────
+
+export type DiscountType = "percent" | "fixed";
+
+export interface Coupon {
+  code: string;           // document ID = uppercase coupon code
+  discountType: DiscountType;
+  discountValue: number;  // percent (0–100) or fixed GBP pence
+  minOrderValue?: number; // minimum order total in pence to apply
+  maxUses?: number;
+  usedCount: number;
+  active: boolean;
+  expiresAt?: string;
+  createdAt: string;
+}
+
+// ─── Stock Alerts ─────────────────────────────────────────────────────────
+
+export interface StockAlert {
+  id: string;
+  userId: string;
+  email: string;
+  productId: string;
+  productSlug: string;
+  productName: string;
+  createdAt: string;
+  notifiedAt?: string;    // set when the alert email is sent
+}
+
+// ─── Analytics ────────────────────────────────────────────────────────────
+
+export interface ProductViewRecord {
+  productId: string;
+  slug: string;
+  views: number;
+}
+
+export interface SearchTermRecord {
+  term: string;
+  count: number;
+  lastSearchedAt: string;
+}
+
+export type CartEventType = "add_to_cart" | "remove_from_cart" | "checkout_started";
+
+export interface CartEvent {
+  type: CartEventType;
+  userId?: string;
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number;
+  color?: string;
+  createdAt: string;
 }

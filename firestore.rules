@@ -1,0 +1,130 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.role == 'admin';
+    }
+
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    // ─── users ────────────────────────────────────────────────────────────────
+    // Document ID = Firebase Auth UID
+    match /users/{uid} {
+      allow read:   if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── products ─────────────────────────────────────────────────────────────
+    // Publicly readable; only admins can write
+    match /products/{productId} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ─── categories ───────────────────────────────────────────────────────────
+    match /categories/{categoryId} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ─── orders ───────────────────────────────────────────────────────────────
+    // Users can create and read their own orders; admins can read/update all
+    match /orders/{orderId} {
+      allow read:   if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incomingData().userId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── analytics/productViews ───────────────────────────────────────────────
+    // Anyone can increment views (anonymous included); only admins can read
+    match /analytics/productViews {
+      allow read:  if isAdmin();
+      allow write: if true;
+    }
+
+    // ─── analytics/searchTerms ────────────────────────────────────────────────
+    match /analytics/searchTerms {
+      allow read:  if isAdmin();
+      allow write: if true;
+    }
+
+    // ─── analytics/cartEvents ─────────────────────────────────────────────────
+    match /analytics/cartEvents {
+      allow read:  if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // ─── productViews subcollection ───────────────────────────────────────────
+    // One doc per product, incremented on every view
+    match /analytics/productViews/products/{productId} {
+      allow read:  if isAdmin();
+      allow write: if true;
+    }
+
+    // ─── searchTerms subcollection ────────────────────────────────────────────
+    match /analytics/searchTerms/terms/{termId} {
+      allow read:  if isAdmin();
+      allow write: if true;
+    }
+
+    // ─── cartEvents subcollection ─────────────────────────────────────────────
+    // add_to_cart / remove_from_cart / checkout_started events
+    match /analytics/cartEvents/events/{eventId} {
+      allow read:  if isAdmin();
+      allow write: if isSignedIn();
+    }
+
+    // ─── reviews ──────────────────────────────────────────────────────────────
+    // Authenticated users can create reviews for products they ordered (enforced in API)
+    match /reviews/{reviewId} {
+      allow read:  if true;
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ─── wishlists ────────────────────────────────────────────────────────────
+    // Each user has one wishlist document (ID = uid)
+    match /wishlists/{uid} {
+      allow read:   if isOwner(uid);
+      allow write:  if isOwner(uid);
+    }
+
+    // ─── notifications ────────────────────────────────────────────────────────
+    match /notifications/{uid}/items/{notifId} {
+      allow read:   if isOwner(uid);
+      allow write:  if isAdmin();
+    }
+
+    // ─── coupons ──────────────────────────────────────────────────────────────
+    // Authenticated users can read (to validate at checkout); only admins write
+    match /coupons/{couponId} {
+      allow read:  if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ─── stockAlerts ──────────────────────────────────────────────────────────
+    // Users subscribe to back-in-stock alerts for a product
+    match /stockAlerts/{alertId} {
+      allow read:   if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && incomingData().userId == request.auth.uid;
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+  }
+}

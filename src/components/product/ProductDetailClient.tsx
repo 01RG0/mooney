@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { BagIcon, CheckIcon } from "@/components/ui/icons";
 import { ViewerCounter } from '@/components/product/ViewerCounter'
+import { trackProductView } from "@/lib/analytics";
 
 /**
  * Premium, Apple-ad style product detail. The whole frame IS the soft rose
@@ -27,6 +28,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [colorIndex, setColorIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
+
+  useEffect(() => {
+    void trackProductView(product.id, product.slug);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.id]);
 
   const color = product.colors[colorIndex]?.name ?? "Default";
 
