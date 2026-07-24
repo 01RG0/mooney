@@ -29,27 +29,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      // Update UI state immediately — never block on the session cookie fetch.
+      setUser(firebaseUser);
+      setLoading(false);
+
+      // Sync the server-side session cookie in the background (best-effort).
       if (firebaseUser) {
-        try {
-          const idToken = await firebaseUser.getIdToken();
-          await fetch("/api/auth/session", {
+        firebaseUser.getIdToken().then((idToken) =>
+          fetch("/api/auth/session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ idToken }),
-          });
-        } catch {
-          // non-fatal: session cookie is a best-effort enhancement
-        }
+          })
+        ).catch(() => {});
       } else {
         fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
       }
-
-      // Protected pages are authorized by the HTTP-only session cookie, not by
-      // Firebase's client-side state. Keep account navigation unavailable until
-      // the cookie request above has finished so it cannot race the proxy.
-      setUser(firebaseUser);
-      setLoading(false);
     });
     return unsubscribe;
   }, []);
