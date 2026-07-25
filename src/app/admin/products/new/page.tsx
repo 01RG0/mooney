@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { uploadImage } from '@/lib/imagekit'
+import { uploadToStorage } from '@/lib/storage'
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -18,8 +18,9 @@ export default function NewProductPage() {
     isNew: false,
     stock: "0",
   });
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [mainImageIndex, setMainImageIndex] = useState(0)
   const [viewerEnabled, setViewerEnabled] = useState(false)
@@ -182,7 +183,7 @@ export default function NewProductPage() {
         <div>
           <label className={labelCls}>Product Images</label>
           <label className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white transition-opacity cursor-pointer ${uploading ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}>
-            {uploading ? 'Uploading…' : `Upload Image${images.length > 0 ? ` (${images.length} added)` : ''}`}
+            {uploading ? `Uploading… ${uploadProgress ?? 0}%` : `Upload Image${images.length > 0 ? ` (${images.length} added)` : ''}`}
             <input
               ref={imgRef}
               type="file"
@@ -195,16 +196,19 @@ export default function NewProductPage() {
                 setUploading(true)
                 try {
                   for (const f of files) {
-                    const url = await uploadImage(f, 'products')
-                    if (!url) { alert('Upload failed — check ImageKit is configured in Vercel env vars'); break }
+                    const url = await uploadToStorage(f, 'products', p => setUploadProgress(p))
                     setImages((prev) => {
                       const next = [...prev, url]
                       if (next.length === 1) setForm(fm => ({ ...fm, image: url }))
                       return next
                     })
+                    setUploadProgress(null)
                   }
+                } catch (err: unknown) {
+                  alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
                 } finally {
                   setUploading(false)
+                  setUploadProgress(null)
                   e.target.value = ''
                 }
               }}
@@ -295,9 +299,12 @@ export default function NewProductPage() {
                       onChange={async (e) => {
                         const f = e.target.files?.[0]
                         if (!f) return
-                        const url = await uploadImage(f, 'products')
-                        if (!url) { alert('Upload failed — check ImageKit env vars'); return }
-                        addVariantImage(variant.id, url)
+                        try {
+                          const url = await uploadToStorage(f, 'products')
+                          addVariantImage(variant.id, url)
+                        } catch (err: unknown) {
+                          alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+                        }
                         e.target.value = ''
                       }}
                     />

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { uploadImage } from '@/lib/imagekit'
+import { uploadToStorage } from '@/lib/storage'
 
 export default function EditProductPage() {
   const { id } = useParams<{ id: string }>()
@@ -10,6 +10,7 @@ export default function EditProductPage() {
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([])
   const [form, setForm] = useState({ name: '', slug: '', category: '', price: '', image: '', description: '', details: '', maker: '', isNew: false, stock: '0' })
   const [saving, setSaving] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [mainImageIndex, setMainImageIndex] = useState(0)
   const [viewerEnabled, setViewerEnabled] = useState(false)
@@ -166,28 +167,41 @@ export default function EditProductPage() {
           </select>
         </div>
         <div><label className={labelCls}>Price (EGP)</label><input name='price' type='number' step='0.01' value={form.price} onChange={handleChange} required className={inputCls} /></div>
-        <div><label className={labelCls}>Image path</label><input name='image' value={form.image} onChange={handleChange} className={inputCls} /></div>
+
         <div>
           <label className={labelCls}>Product Images</label>
           <button
             type="button"
             onClick={() => imgRef.current?.click()}
-            className="rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity"
+            className={`rounded-full px-4 py-2 text-sm text-white transition-opacity ${uploadProgress !== null ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}
           >
-            Upload Image
+            {uploadProgress !== null ? `Uploading… ${uploadProgress}%` : 'Upload Image'}
           </button>
           <input
             ref={imgRef}
             type="file"
             accept="image/*"
+            multiple
             className="hidden"
             onChange={async (e) => {
-              const f = e.target.files?.[0]
-              if (!f) return
-              const url = await uploadImage(f, 'products')
-              if (!url) { alert('Upload failed — check ImageKit env vars'); return }
-              setImages((prev) => [...prev, url])
-              e.target.value = ''
+              const files = Array.from(e.target.files ?? [])
+              if (!files.length) return
+              try {
+                for (const f of files) {
+                  const url = await uploadToStorage(f, 'products', p => setUploadProgress(p))
+                  setImages((prev) => {
+                    const next = [...prev, url]
+                    if (next.length === 1) setForm(fm => ({ ...fm, image: url }))
+                    return next
+                  })
+                  setUploadProgress(null)
+                }
+              } catch (err: unknown) {
+                alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+              } finally {
+                setUploadProgress(null)
+                e.target.value = ''
+              }
             }}
           />
           {images.length > 0 && (
@@ -197,7 +211,7 @@ export default function EditProductPage() {
                   <img src={url} alt="" className="h-full w-full rounded-xl object-cover" />
                   <button
                     type="button"
-                    onClick={() => setMainImageIndex(i)}
+                    onClick={() => { setMainImageIndex(i); setForm(fm => ({ ...fm, image: url })) }}
                     title="Set as main"
                     className={`absolute bottom-0 left-0 rounded-br-xl rounded-tl-xl px-1 text-xs ${
                       i === mainImageIndex
@@ -278,9 +292,12 @@ export default function EditProductPage() {
                       onChange={async (e) => {
                         const f = e.target.files?.[0]
                         if (!f) return
-                        const url = await uploadImage(f, 'products')
-                        if (!url) { alert('Upload failed — check ImageKit env vars'); return }
-                        addVariantImage(variant.id, url)
+                        try {
+                          const url = await uploadToStorage(f, 'products')
+                          addVariantImage(variant.id, url)
+                        } catch (err: unknown) {
+                          alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+                        }
                         e.target.value = ''
                       }}
                     />

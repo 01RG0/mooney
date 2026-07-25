@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
-import { uploadImage } from '@/lib/imagekit'
+import { uploadToStorage } from '@/lib/storage'
 
 interface Category { slug: string; name: string; tagline: string; image: string }
 const emptyForm = { slug: '', name: '', tagline: '', image: '' }
@@ -22,12 +22,10 @@ export default function CategoriesPage() {
     if (!file) return
     setUploading(true)
     try {
-      const url = await uploadImage(file, 'categories')
-      if (url) {
-        setForm(f => ({ ...f, image: url }))
-      } else {
-        alert('Upload failed — check ImageKit is configured in Vercel env vars')
-      }
+      const url = await uploadToStorage(file, 'categories')
+      setForm(f => ({ ...f, image: url }))
+    } catch (err: unknown) {
+      alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
     } finally {
       setUploading(false)
       e.target.value = ''

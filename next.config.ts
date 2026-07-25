@@ -17,8 +17,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "ik.imagekit.io" },
       // Google profile photos (Google sign-in avatars)
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
-      // Firebase Storage (if used)
+      // Firebase Storage (existing stored URLs — keep for backwards compat)
       { protocol: "https", hostname: "firebasestorage.googleapis.com" },
+      { protocol: "https", hostname: "storage.googleapis.com" },
+      // freeimage.host (new image hosting)
+      { protocol: "https", hostname: "freeimage.host" },
     ],
   },
   // Allow Firebase signInWithPopup to read window.closed on the opener.
