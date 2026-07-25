@@ -1,0 +1,188 @@
+import { redirect } from 'next/navigation'
+import { getAdminDb } from '@/lib/firebase-admin'
+import { requireAdmin } from '@/lib/session'
+
+export const dynamic = 'force-dynamic'
+
+interface ProductViewDoc { productId: string; slug: string; views: number }
+interface CartEventDoc {
+  type: string; productId: string; productName: string; slug?: string
+  price: number; quantity: number; userId: string | null; createdAt: string
+}
+interface SearchTermDoc { term: string; count: number }
+
+const BADGE: Record<string, string> = {
+  add_to_cart:      'px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800',
+  remove_from_cart: 'px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700',
+  checkout_started: 'px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700',
+}
+
+export default async function AnalyticsPage() {
+  try { await requireAdmin() } catch { redirect('/login?from=/admin/analytics') }
+
+  const db = getAdminDb()
+  const [viewsSnap, cartSnap, searchSnap] = await Promise.all([
+    db.collection('analytics').doc('productViews').collection('products').get(),
+    db.collection('analytics').doc('cartEvents').collection('events').get(),
+    db.collection('analytics').doc('searchTerms').collection('terms').get(),
+  ])
+
+  const topProducts = viewsSnap.docs
+    .map(d => d.data() as unknown as ProductViewDoc)
+    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+    .slice(0, 10)
+
+  const cartDocs = cartSnap.docs.map(d => d.data() as unknown as CartEventDoc)
+  const funnel = {
+    addToCart:      cartDocs.filter(e => e.type === 'add_to_cart').length,
+    removedFromCart: cartDocs.filter(e => e.type === 'remove_from_cart').length,
+    checkoutStarted: cartDocs.filter(e => e.type === 'checkout_started').length,
+  }
+
+  const cartByProduct = new Map<string, { productId: string; productName: string; slug: string; count: number }>()
+  for (const e of cartDocs.filter(e => e.type === 'add_to_cart')) {
+    const ex = cartByProduct.get(e.productId)
+    if (ex) { ex.count++ } else { cartByProduct.set(e.productId, { productId: e.productId, productName: e.productName, slug: e.slug ?? '', count: 1 }) }
+  }
+  const topCartProducts = Array.from(cartByProduct.values()).sort((a, b) => b.count - a.count).slice(0, 10)
+
+  const topSearches = searchSnap.docs
+    .map(d => d.data() as unknown as SearchTermDoc)
+    .sort((a, b) => (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, 10)
+
+  const recentCartEvents = cartDocs
+    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+    .slice(0, 20)
+
+  return (
+    <div>
+      <h1 className="font-display text-4xl text-brown-900 mb-8">Analytics</h1>
+
+      {/* Cart funnel */}
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        {[
+          { label: 'Add to Cart',        value: funnel.addToCart },
+          { label: 'Removed from Cart',  value: funnel.removedFromCart },
+          { label: 'Checkout Started',   value: funnel.checkoutStarted },
+        ].map(s => (
+          <div key={s.label} className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl p-6">
+            <p className="text-sm text-brown-700 font-sans mb-1">{s.label}</p>
+            <p className="font-display text-3xl text-brown-900">{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Top product views */}
+      <h2 className="font-display text-2xl text-brown-900 mb-3">Top Product Views</h2>
+      <div className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl overflow-hidden mb-8">
+        <table className="w-full">
+          <thead className="border-b border-white/40">
+            <tr>
+              {['#', 'Slug', 'Views'].map(h => (
+                <th key={h} className="p-4 text-sm text-brown-700 font-sans text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {topProducts.length === 0
+              ? <tr><td colSpan={3} className="p-4 text-sm font-sans text-brown-700 text-center">No data yet</td></tr>
+              : topProducts.map((p, i) => (
+                <tr key={p.productId} className="border-b border-white/20">
+                  <td className="p-4 text-sm font-sans text-brown-700">{i + 1}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{p.slug}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{p.views ?? 0}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Top cart products */}
+      <h2 className="font-display text-2xl text-brown-900 mb-3">Top Products Added to Cart</h2>
+      <div className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl overflow-hidden mb-8">
+        <table className="w-full">
+          <thead className="border-b border-white/40">
+            <tr>
+              {['#', 'Product', 'Add-to-Cart Count'].map(h => (
+                <th key={h} className="p-4 text-sm text-brown-700 font-sans text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {topCartProducts.length === 0
+              ? <tr><td colSpan={3} className="p-4 text-sm font-sans text-brown-700 text-center">No data yet</td></tr>
+              : topCartProducts.map((p, i) => (
+                <tr key={p.productId} className="border-b border-white/20">
+                  <td className="p-4 text-sm font-sans text-brown-700">{i + 1}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{p.productName}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{p.count}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Top searches */}
+      <h2 className="font-display text-2xl text-brown-900 mb-3">Top Searches</h2>
+      <div className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl overflow-hidden mb-8">
+        <table className="w-full">
+          <thead className="border-b border-white/40">
+            <tr>
+              {['#', 'Search Term', 'Count'].map(h => (
+                <th key={h} className="p-4 text-sm text-brown-700 font-sans text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {topSearches.length === 0
+              ? <tr><td colSpan={3} className="p-4 text-sm font-sans text-brown-700 text-center">No searches yet</td></tr>
+              : topSearches.map((s, i) => (
+                <tr key={s.term} className="border-b border-white/20">
+                  <td className="p-4 text-sm font-sans text-brown-700">{i + 1}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{s.term}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{s.count ?? 0}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Recent cart activity */}
+      <h2 className="font-display text-2xl text-brown-900 mb-3">Recent Cart Activity</h2>
+      <div className="backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl overflow-hidden mb-8">
+        <table className="w-full">
+          <thead className="border-b border-white/40">
+            <tr>
+              {['Type', 'Product', 'Price', 'Qty', 'User', 'Time'].map(h => (
+                <th key={h} className="p-4 text-sm text-brown-700 font-sans text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {recentCartEvents.length === 0
+              ? <tr><td colSpan={6} className="p-4 text-sm font-sans text-brown-700 text-center">No activity yet</td></tr>
+              : recentCartEvents.map((e, i) => (
+                <tr key={i} className="border-b border-white/20">
+                  <td className="p-4">
+                    <span className={BADGE[e.type] ?? 'px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700'}>
+                      {e.type.replace(/_/g, ' ')}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{e.productName}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">£{(e.price ?? 0).toFixed(2)}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{e.quantity ?? 1}</td>
+                  <td className="p-4 text-sm font-sans text-brown-700 font-mono">
+                    {e.userId ? e.userId.slice(0, 8) : 'guest'}
+                  </td>
+                  <td className="p-4 text-sm font-sans text-brown-700">
+                    {new Date(e.createdAt).toLocaleString('en-GB')}
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}

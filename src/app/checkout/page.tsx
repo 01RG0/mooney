@@ -11,6 +11,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import { type OrderConfirmation } from "@/lib/repository/orders";
 import { ArrowLeftIcon, CheckIcon } from "@/components/ui/icons";
+import { trackCartEvent } from "@/lib/analytics";
 import {
   calculateDeliveryFee,
   getDeliveryFeeEstimate,
@@ -102,6 +103,12 @@ export default function CheckoutPage() {
     if (!validate()) return;
     setStatus("submitting");
     setOrderError("");
+    void trackCartEvent("checkout_started", {
+      productId: "cart",
+      productName: "checkout",
+      price: total,
+      quantity: items.reduce((n, i) => n + i.quantity, 0),
+    });
     try {
       const res = await fetch("/api/orders", {
         method: "POST",

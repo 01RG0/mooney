@@ -67,7 +67,7 @@ export default async function OrdersPage() {
                   </td>
                   <td className="p-4 text-brown-900">{o.email}</td>
                   <td className="p-4 text-brown-900">
-                    £{o.total.toFixed(2)}
+                    £{(o.total ?? 0).toFixed(2)}
                   </td>
                   <td className="p-4">
                     <span
