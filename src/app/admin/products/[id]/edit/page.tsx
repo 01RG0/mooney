@@ -185,6 +185,7 @@ export default function EditProductPage() {
               const f = e.target.files?.[0]
               if (!f) return
               const url = await uploadImage(f, 'products')
+              if (!url) { alert('Upload failed — check ImageKit env vars'); return }
               setImages((prev) => [...prev, url])
               e.target.value = ''
             }}
@@ -278,6 +279,7 @@ export default function EditProductPage() {
                         const f = e.target.files?.[0]
                         if (!f) return
                         const url = await uploadImage(f, 'products')
+                        if (!url) { alert('Upload failed — check ImageKit env vars'); return }
                         addVariantImage(variant.id, url)
                         e.target.value = ''
                       }}

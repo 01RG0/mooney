@@ -19,6 +19,7 @@ export default function NewProductPage() {
     stock: "0",
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false)
   const [images, setImages] = useState<string[]>([])
   const [mainImageIndex, setMainImageIndex] = useState(0)
   const [viewerEnabled, setViewerEnabled] = useState(false)
@@ -179,69 +180,64 @@ export default function NewProductPage() {
           />
         </div>
         <div>
-          <label className={labelCls}>
-            Image path (e.g. /products/my-image.png)
-          </label>
-          <input
-            name="image"
-            value={form.image}
-            onChange={handleChange}
-            className={inputCls}
-          />
-        </div>
-        <div>
           <label className={labelCls}>Product Images</label>
-          <button
-            type="button"
-            onClick={() => imgRef.current?.click()}
-            className="rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity"
-          >
-            Upload Image
-          </button>
-          <input
-            ref={imgRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={async (e) => {
-              const f = e.target.files?.[0]
-              if (!f) return
-              const url = await uploadImage(f, 'products')
-              setImages((prev) => [...prev, url])
-              e.target.value = ''
-            }}
-          />
+          <label className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white transition-opacity cursor-pointer ${uploading ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}>
+            {uploading ? 'Uploading…' : `Upload Image${images.length > 0 ? ` (${images.length} added)` : ''}`}
+            <input
+              ref={imgRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={async (e) => {
+                const files = Array.from(e.target.files ?? [])
+                if (!files.length) return
+                setUploading(true)
+                try {
+                  for (const f of files) {
+                    const url = await uploadImage(f, 'products')
+                    if (!url) { alert('Upload failed — check ImageKit is configured in Vercel env vars'); break }
+                    setImages((prev) => {
+                      const next = [...prev, url]
+                      if (next.length === 1) setForm(fm => ({ ...fm, image: url }))
+                      return next
+                    })
+                  }
+                } finally {
+                  setUploading(false)
+                  e.target.value = ''
+                }
+              }}
+            />
+          </label>
           {images.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {images.map((url, i) => (
                 <div key={i} className="relative h-16 w-16">
                   <img src={url} alt="" className="h-full w-full rounded-xl object-cover" />
                   <button
                     type="button"
-                    onClick={() => setMainImageIndex(i)}
+                    onClick={() => { setMainImageIndex(i); setForm(fm => ({ ...fm, image: url })) }}
                     title="Set as main"
-                    className={`absolute bottom-0 left-0 rounded-br-xl rounded-tl-xl px-1 text-xs ${
-                      i === mainImageIndex
-                        ? 'bg-rose-400 text-white'
-                        : 'bg-black/30 text-white hover:bg-rose-400'
-                    }`}
-                  >
-                    ★
-                  </button>
+                    className={`absolute bottom-0 left-0 rounded-br-xl rounded-tl-xl px-1 text-xs ${i === mainImageIndex ? 'bg-rose-400 text-white' : 'bg-black/30 text-white hover:bg-rose-400'}`}
+                  >★</button>
                   <button
                     type="button"
                     onClick={() => {
-                      setImages((prev) => prev.filter((_, j) => j !== i))
+                      setImages((prev) => {
+                        const next = prev.filter((_, j) => j !== i)
+                        setForm(fm => ({ ...fm, image: next[0] ?? '' }))
+                        return next
+                      })
                       if (mainImageIndex >= i && mainImageIndex > 0) setMainImageIndex((p) => p - 1)
                     }}
                     className="absolute right-0 top-0 rounded-bl-xl rounded-tr-xl bg-black/40 px-1 text-xs text-white hover:bg-rose-500"
-                  >
-                    ✕
-                  </button>
+                  >✕</button>
                 </div>
               ))}
             </div>
           )}
+          {images.length === 0 && <p className="mt-1 text-xs text-brown-700/60 font-sans">You can select multiple images at once</p>}
         </div>
 
         {/* Color variant toggle */}
@@ -300,6 +296,7 @@ export default function NewProductPage() {
                         const f = e.target.files?.[0]
                         if (!f) return
                         const url = await uploadImage(f, 'products')
+                        if (!url) { alert('Upload failed — check ImageKit env vars'); return }
                         addVariantImage(variant.id, url)
                         e.target.value = ''
                       }}

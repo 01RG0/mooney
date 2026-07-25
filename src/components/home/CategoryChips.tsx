@@ -18,13 +18,19 @@ export async function CategoryChips() {
               className="group flex items-center gap-4 rounded-3xl bg-cream/70 p-4 transition-colors hover:bg-cream"
             >
               <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blush-100">
-                <Image
-                  src={category.image}
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="h-14 w-14 object-contain"
-                />
+                {category.image ? (
+                  <Image
+                    src={category.image}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="h-14 w-14 object-contain"
+                  />
+                ) : (
+                  <span className="font-display text-2xl text-brown-700">
+                    {category.name.charAt(0)}
+                  </span>
+                )}
               </span>
               <span className="min-w-0">
                 <span className="flex items-center gap-1 font-display text-lg font-semibold text-brown-900">

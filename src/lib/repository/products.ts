@@ -32,8 +32,11 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getNewArrivals(limit = 6): Promise<Product[]> {
   try {
-    const snap = await getAdminDb().collection('products').where('isNew', '==', true).limit(limit).get()
-    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Product[]
+    const snap = await getAdminDb().collection('products').get()
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }) as Product)
+      .filter(p => p.isNew === true)
+      .slice(0, limit)
   } catch {
     return []
   }

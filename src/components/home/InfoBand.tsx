@@ -46,7 +46,7 @@ export function InfoBand() {
               rel="noopener noreferrer"
               className="mt-6 flex items-center gap-3 group"
             >
-              <Image src="/logo.png" alt="Meromade" width={44} height={44} className="h-11 w-11 rounded-full object-contain bg-brown-800 ring-2 ring-brown-900" />
+              <Image src="/logo.png" alt="Meromade" width={44} height={44} className="h-11 w-11 rounded-full object-contain bg-rose-50 ring-2 ring-brown-900" />
               <div className="text-sm">
                 <p className="font-medium text-blush-100 group-hover:underline">Artist of the Month</p>
                 <p className="text-blush-100/60">mer0made</p>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
+import { uploadImage } from '@/lib/imagekit'
 
 interface Category { slug: string; name: string; tagline: string; image: string }
 const emptyForm = { slug: '', name: '', tagline: '', image: '' }
@@ -21,12 +22,11 @@ export default function CategoriesPage() {
     if (!file) return
     setUploading(true)
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      const res = await fetch('/api/account/avatar', { method: 'POST', body: fd })
-      if (res.ok) {
-        const data = await res.json()
-        setForm(f => ({ ...f, image: data.url }))
+      const url = await uploadImage(file, 'categories')
+      if (url) {
+        setForm(f => ({ ...f, image: url }))
+      } else {
+        alert('Upload failed — check ImageKit is configured in Vercel env vars')
       }
     } finally {
       setUploading(false)
