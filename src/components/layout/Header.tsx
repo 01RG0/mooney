@@ -36,7 +36,7 @@ export function Header() {
     href === "/shop" ? pathname.startsWith("/shop") : false;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brown-900/8 bg-blush-200/85 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-brown-900/8 bg-blush-200/50 backdrop-blur-md">
       <Container className="flex h-16 items-center justify-between gap-4 sm:h-[72px]">
         <Logo />
 
