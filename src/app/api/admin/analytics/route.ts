@@ -45,7 +45,9 @@ export async function GET() {
       .slice(0, 10)
 
     // Cart event aggregation
-    const cartDocs = cartSnap.docs.map(d => d.data() as unknown as CartEventDoc)
+    const cartDocs = cartSnap.docs
+      .map(d => d.data() as unknown as CartEventDoc)
+      .filter(e => typeof e.type === 'string' && typeof e.productName === 'string')
     const cartEvents = {
       addToCart: cartDocs.filter(e => e.type === 'add_to_cart').length,
       removedFromCart: cartDocs.filter(e => e.type === 'remove_from_cart').length,

@@ -32,7 +32,9 @@ export default async function AnalyticsPage() {
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
     .slice(0, 10)
 
-  const cartDocs = cartSnap.docs.map(d => d.data() as unknown as CartEventDoc)
+  const cartDocs = cartSnap.docs
+    .map(d => d.data() as unknown as CartEventDoc)
+    .filter(e => typeof e.type === 'string' && typeof e.productName === 'string')
   const funnel = {
     addToCart:      cartDocs.filter(e => e.type === 'add_to_cart').length,
     removedFromCart: cartDocs.filter(e => e.type === 'remove_from_cart').length,
@@ -165,18 +167,18 @@ export default async function AnalyticsPage() {
               : recentCartEvents.map((e, i) => (
                 <tr key={i} className="border-b border-white/20">
                   <td className="p-4">
-                    <span className={BADGE[e.type] ?? 'px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700'}>
-                      {e.type.replace(/_/g, ' ')}
+                    <span className={BADGE[e.type ?? ''] ?? 'px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700'}>
+                      {(e.type ?? 'unknown').replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="p-4 text-sm font-sans text-brown-900">{e.productName}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">{e.productName ?? '—'}</td>
                   <td className="p-4 text-sm font-sans text-brown-900">£{(e.price ?? 0).toFixed(2)}</td>
                   <td className="p-4 text-sm font-sans text-brown-900">{e.quantity ?? 1}</td>
                   <td className="p-4 text-sm font-sans text-brown-700 font-mono">
-                    {e.userId ? e.userId.slice(0, 8) : 'guest'}
+                    {e.userId ? String(e.userId).slice(0, 8) : 'guest'}
                   </td>
                   <td className="p-4 text-sm font-sans text-brown-700">
-                    {new Date(e.createdAt).toLocaleString('en-GB')}
+                    {e.createdAt ? new Date(e.createdAt).toLocaleString('en-GB') : '—'}
                   </td>
                 </tr>
               ))}
