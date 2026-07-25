@@ -63,7 +63,7 @@ export default async function ProductsPage() {
                     {p.category}
                   </td>
                   <td className="p-4 text-brown-900">
-                    £{(p.price ?? 0).toFixed(2)}
+                    EGP {(p.price ?? 0).toFixed(2)}
                   </td>
                   <td className="p-4 text-brown-700">{p.stock ?? "—"}</td>
                   <td className="p-4">

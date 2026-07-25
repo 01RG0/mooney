@@ -159,7 +159,7 @@ export default function EditProductPage() {
             ))}
           </select>
         </div>
-        <div><label className={labelCls}>Price (£)</label><input name='price' type='number' step='0.01' value={form.price} onChange={handleChange} required className={inputCls} /></div>
+        <div><label className={labelCls}>Price (EGP)</label><input name='price' type='number' step='0.01' value={form.price} onChange={handleChange} required className={inputCls} /></div>
         <div><label className={labelCls}>Image path</label><input name='image' value={form.image} onChange={handleChange} className={inputCls} /></div>
         <div>
           <label className={labelCls}>Product Images</label>

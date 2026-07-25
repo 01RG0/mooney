@@ -94,7 +94,7 @@ export function OrdersHistory() {
                 {STATUS_LABELS[order.status] ?? order.status}
               </span>
               <span className="text-sm font-semibold text-brown-900">
-                £{(order.total / 100).toFixed(2)}
+                EGP {(order.total ?? 0).toFixed(2)}
               </span>
               <svg
                 viewBox="0 0 24 24"
@@ -129,14 +129,14 @@ export function OrdersHistory() {
                         {item.color && <span className="ml-1 text-xs text-brown-600">· {item.color}</span>}
                       </td>
                       <td className="py-2 text-center text-brown-700">{item.quantity}</td>
-                      <td className="py-2 text-right text-brown-900">£{(item.price / 100).toFixed(2)}</td>
+                      <td className="py-2 text-right text-brown-900">EGP {(item.price ?? 0).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
                   <tr>
                     <td colSpan={2} className="pt-3 text-right text-xs font-medium text-brown-700">Total</td>
-                    <td className="pt-3 text-right font-semibold text-brown-900">£{(order.total / 100).toFixed(2)}</td>
+                    <td className="pt-3 text-right font-semibold text-brown-900">EGP {(order.total ?? 0).toFixed(2)}</td>
                   </tr>
                 </tfoot>
               </table>

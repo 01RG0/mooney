@@ -86,7 +86,7 @@ export default async function OrderDetailPage({
             Items: {order.items.length}
           </p>
           <p className="font-display text-2xl text-brown-900 mt-2">
-            £{(order.total ?? 0).toFixed(2)}
+            EGP {(order.total ?? 0).toFixed(2)}
           </p>
           <StatusSelector orderId={order.id} currentStatus={order.status} />
           {order.status === "pending-manual-confirmation" && (
@@ -115,7 +115,7 @@ export default async function OrderDetailPage({
                 <td className="p-4 text-brown-700">{item.color ?? "—"}</td>
                 <td className="p-4 text-brown-700">{item.quantity}</td>
                 <td className="p-4 text-brown-900">
-                  £{((item.price ?? 0) * (item.quantity ?? 1)).toFixed(2)}
+                  EGP {((item.price ?? 0) * (item.quantity ?? 1)).toFixed(2)}
                 </td>
               </tr>
             ))}

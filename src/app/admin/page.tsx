@@ -7,18 +7,19 @@ export const dynamic = 'force-dynamic';
 export default async function AdminDashboard() {
   await requireAdmin();
   const db = getAdminDb();
-  const [productsSnap, ordersSnap] = await Promise.all([
+  const [productsSnap, ordersSnap, categoriesSnap] = await Promise.all([
     db.collection('products').get(),
     db.collection('orders').get(),
+    db.collection('categories').get(),
   ]);
   const orders = ordersSnap.docs.map(d => d.data() as { total: number });
   const revenue = orders.reduce((sum, o) => sum + (o.total ?? 0), 0);
 
   const stats = [
     { label: 'Total Orders', value: orders.length > 0 ? String(orders.length) : '—' },
-    { label: 'Revenue',      value: orders.length > 0 ? '£' + revenue.toFixed(2) : '—' },
+    { label: 'Revenue',      value: orders.length > 0 ? `EGP ${revenue.toFixed(2)}` : '—' },
     { label: 'Products',     value: productsSnap.size > 0 ? String(productsSnap.size) : '—' },
-    { label: 'Categories',   value: '4' },
+    { label: 'Categories',   value: categoriesSnap.size > 0 ? String(categoriesSnap.size) : '—' },
   ];
 
   return (

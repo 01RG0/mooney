@@ -1,6 +1,6 @@
-const priceFormatter = new Intl.NumberFormat("en-US", {
+const priceFormatter = new Intl.NumberFormat("en-EG", {
   style: "currency",
-  currency: "USD",
+  currency: "EGP",
 });
 
 export function formatPrice(value: number): string {

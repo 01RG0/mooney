@@ -172,7 +172,7 @@ export default async function AnalyticsPage() {
                     </span>
                   </td>
                   <td className="p-4 text-sm font-sans text-brown-900">{e.productName ?? '—'}</td>
-                  <td className="p-4 text-sm font-sans text-brown-900">£{(e.price ?? 0).toFixed(2)}</td>
+                  <td className="p-4 text-sm font-sans text-brown-900">EGP {(e.price ?? 0).toFixed(2)}</td>
                   <td className="p-4 text-sm font-sans text-brown-900">{e.quantity ?? 1}</td>
                   <td className="p-4 text-sm font-sans text-brown-700 font-mono">
                     {e.userId ? String(e.userId).slice(0, 8) : 'guest'}

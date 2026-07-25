@@ -176,7 +176,7 @@ export default function NewProductPage() {
           </select>
         </div>
         <div>
-          <label className={labelCls}>Price (£)</label>
+          <label className={labelCls}>Price (EGP)</label>
           <input
             name="price"
             type="number"
