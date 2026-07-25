@@ -17,7 +17,7 @@ export const duration = {
 
 // ─── Standard page transition variants ───────────────────────────────────────
 export const pageVariants = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 1, y: 0 },
   animate: { opacity: 1, y: 0, transition: { duration: duration.slow, ease: ease.smooth } },
   exit:    { opacity: 0, y: -8,  transition: { duration: duration.fast, ease: ease.smooth } },
 };

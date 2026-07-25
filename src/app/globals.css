@@ -137,7 +137,7 @@
   bottom: 0;
   width: 100vw;
   height: 0;
-  box-shadow: 0 0 50vh 40vh var(--color-blush-200);
+  box-shadow: 0 0 15vh 10vh var(--color-blush-200);
 }
 
 .aurora .aurora-v {
@@ -146,7 +146,11 @@
   bottom: 0;
   width: 0;
   height: 100vh;
-  box-shadow: 0 0 35vw 25vw var(--color-blush-200);
+  box-shadow: 0 0 10vw 6vw var(--color-blush-200);
+}
+
+@media (max-width: 768px) {
+  .aurora { display: none; }
 }
 
 /* Transform-based sweep (GPU-composited) for a smoother drift than

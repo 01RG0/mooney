@@ -13,7 +13,7 @@ export function Hero() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-32 top-10 h-[520px] w-[520px] rounded-full bg-rose-300/40 blur-3xl"
+        className="pointer-events-none absolute -right-32 top-10 h-[520px] w-[520px] rounded-full bg-rose-300/40 blur-3xl hidden sm:block"
       />
 
       <Container className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.05fr_1fr] lg:py-20">
