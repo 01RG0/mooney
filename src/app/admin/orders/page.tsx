@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/session";
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +22,9 @@ const statusColors: Record<string, string> = {
 
 async function getOrders(): Promise<Order[]> {
   try {
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(base + "/api/admin/orders", { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
+    await requireAdmin();
+    const snap = await getAdminDb().collection('orders').orderBy('createdAt', 'desc').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
   } catch {
     return [];
   }

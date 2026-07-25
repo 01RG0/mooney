@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { StatusSelector } from "./StatusSelector";
 import { MarkAsPaidButton } from "./MarkAsPaidButton";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/session";
 
 export const dynamic = 'force-dynamic';
 
@@ -33,12 +35,10 @@ interface Order {
 
 async function getOrder(id: string): Promise<Order | null> {
   try {
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(base + "/api/admin/orders/" + id, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
+    await requireAdmin();
+    const doc = await getAdminDb().collection('orders').doc(id).get();
+    if (!doc.exists) return null;
+    return { id: doc.id, ...doc.data() } as Order;
   } catch {
     return null;
   }

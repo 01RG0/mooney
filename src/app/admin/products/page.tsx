@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/session";
 
 export const dynamic = 'force-dynamic';
 
@@ -13,10 +15,9 @@ interface Product {
 
 async function getProducts(): Promise<Product[]> {
   try {
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(base + "/api/admin/products", { cache: "no-store" });
-    if (!res.ok) return [];
-    return res.json();
+    await requireAdmin();
+    const snap = await getAdminDb().collection('products').get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() })) as Product[];
   } catch {
     return [];
   }

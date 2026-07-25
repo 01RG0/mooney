@@ -1,5 +1,6 @@
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import crypto from 'crypto'
 import { getAdminDb } from '@/lib/firebase-admin'
 import { getSessionUser } from '@/lib/session'
 import type { NextRequest } from 'next/server'
@@ -18,24 +19,24 @@ export async function POST(request: NextRequest) {
 
   // Try ImageKit first
   try {
-    const authRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}/api/imagekit/auth`)
-    const authData = await authRes.json()
+    const privateKey = process.env.IMAGEKIT_PRIVATE_KEY
+    const publicKey = process.env.IMAGEKIT_PUBLIC_KEY
+    if (!privateKey || !publicKey) throw new Error('not configured')
 
-    if (!authData.error) {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('fileName', file.name)
-      fd.append('folder', 'avatars')
-      fd.append('token', authData.token)
-      fd.append('expire', String(authData.expire))
-      fd.append('signature', authData.signature)
-      fd.append('publicKey', authData.publicKey)
-      const ikRes = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: fd })
-      const ikData = await ikRes.json()
-      url = ikData.url
-    } else {
-      throw new Error('not configured')
-    }
+    const token = crypto.randomUUID()
+    const expire = Math.floor(Date.now() / 1000) + 2400
+    const signature = crypto.createHmac('sha1', privateKey).update(token + expire).digest('hex')
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('fileName', file.name)
+    fd.append('folder', 'avatars')
+    fd.append('token', token)
+    fd.append('expire', String(expire))
+    fd.append('signature', signature)
+    fd.append('publicKey', publicKey)
+    const ikRes = await fetch('https://upload.imagekit.io/api/v1/files/upload', { method: 'POST', body: fd })
+    const ikData = await ikRes.json()
+    url = ikData.url
   } catch {
     // Fallback: local
     const dir = path.join(process.cwd(), 'public', 'uploads')

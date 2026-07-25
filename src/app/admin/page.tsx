@@ -1,21 +1,23 @@
 import Link from "next/link";
+import { getAdminDb } from "@/lib/firebase-admin";
+import { requireAdmin } from "@/lib/session";
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboard() {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
-  const [productsRes, ordersRes] = await Promise.all([
-    fetch(base + '/api/admin/products', { cache: 'no-store' }),
-    fetch(base + '/api/admin/orders', { cache: 'no-store' }),
+  await requireAdmin();
+  const db = getAdminDb();
+  const [productsSnap, ordersSnap] = await Promise.all([
+    db.collection('products').get(),
+    db.collection('orders').get(),
   ]);
-  const products: Array<unknown> = productsRes.ok ? await productsRes.json() : [];
-  const orders: Array<{ total: number }> = ordersRes.ok ? await ordersRes.json() : [];
+  const orders = ordersSnap.docs.map(d => d.data() as { total: number });
   const revenue = orders.reduce((sum, o) => sum + (o.total ?? 0), 0);
 
   const stats = [
     { label: 'Total Orders', value: orders.length > 0 ? String(orders.length) : '—' },
     { label: 'Revenue',      value: orders.length > 0 ? '£' + revenue.toFixed(2) : '—' },
-    { label: 'Products',     value: products.length > 0 ? String(products.length) : '—' },
+    { label: 'Products',     value: productsSnap.size > 0 ? String(productsSnap.size) : '—' },
     { label: 'Categories',   value: '4' },
   ];
 
