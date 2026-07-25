@@ -1,7 +1,7 @@
-export type CategorySlug = "baskets" | "florals" | "stone-art" | "home-decor";
+export type CategorySlug = string;
 
 export interface Category {
-  slug: CategorySlug;
+  slug: string;
   name: string;
   tagline: string;
   image: string;
@@ -10,6 +10,14 @@ export interface Category {
 export interface ColorOption {
   name: string;
   hex: string;
+}
+
+export interface ColorVariant {
+  id: string;
+  name: string;
+  hex: string;
+  images: string[];
+  stock?: number;
 }
 
 export interface Product {
@@ -27,6 +35,8 @@ export interface Product {
   images?: string[];
   mainImageIndex?: number;
   viewerCount?: { min: number; max: number; enabled: boolean };
+  hasColors?: boolean;
+  colorVariants?: ColorVariant[];
 }
 
 export interface CartItem {
@@ -38,6 +48,8 @@ export interface CartItem {
   price: number;
   image: string;
   color: string;
+  colorHex?: string;
+  selectedColorId?: string;
   quantity: number;
 }
 
@@ -73,6 +85,10 @@ export interface ShippingDetails {
   city: string;
   postalCode: string;
   country: string;
+  governorate?: string;
+  coordinates?: { lat: number; lng: number };
+  deliveryFee?: number;
+  deliveryFeeConfirmed?: boolean;
 }
 
 export type UserRole = "customer" | "admin";

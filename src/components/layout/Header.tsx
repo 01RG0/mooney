@@ -4,12 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut } from "firebase/auth";
+import { AnimatePresence, motion } from "motion/react";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { Logo } from "./Logo";
 import { CartButton } from "./CartButton";
-import { SearchIcon, MenuIcon } from "@/components/ui/icons";
+import { SearchIcon } from "@/components/ui/icons";
 import { Container } from "@/components/ui/Container";
+import {
+  dropdownVariants,
+  slideDownVariants,
+  buttonTap,
+  useReducedMotion,
+} from "@/lib/motion";
 
 const NAV = [
   { label: "About", href: "/#story" },
@@ -23,6 +30,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const { user, loading, sessionReady } = useAuth();
   const router = useRouter();
+  const rm = useReducedMotion();
 
   const isActive = (href: string) =>
     href === "/shop" ? pathname.startsWith("/shop") : false;
@@ -57,7 +65,6 @@ export function Header() {
             <SearchIcon />
           </Link>
           <CartButton />
-          {/* Placeholder keeps layout stable while Firebase resolves */}
           {loading && (
             <div className="ml-1 h-9 w-9 rounded-full bg-brown-900/10" />
           )}
@@ -84,37 +91,82 @@ export function Header() {
               <span className="sm:hidden">Log in</span>
             </Link>
           )}
-          <button
+          {/* Hamburger / Close with morph */}
+          <motion.button
             type="button"
-            aria-label="Open menu"
+            aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
+            whileTap={rm ? undefined : buttonTap}
             className="inline-flex h-11 w-11 items-center justify-center rounded-full text-brown-900 hover:bg-brown-900/8 active:bg-brown-900/12 md:hidden"
           >
-            <MenuIcon />
-          </button>
+            <svg
+              viewBox="0 0 24 24"
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                {open ? (
+                  <motion.g
+                    key="close"
+                    initial={rm ? { opacity: 0 } : { opacity: 0, rotate: -45 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={rm ? { opacity: 0 } : { opacity: 0, rotate: 45 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </motion.g>
+                ) : (
+                  <motion.g
+                    key="menu"
+                    initial={rm ? { opacity: 0 } : { opacity: 0, rotate: 45 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={rm ? { opacity: 0 } : { opacity: 0, rotate: -45 }}
+                    transition={{ duration: 0.18 }}
+                  >
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </motion.g>
+                )}
+              </AnimatePresence>
+            </svg>
+          </motion.button>
         </div>
       </Container>
 
-      {open && (
-        <nav
-          className="border-t border-brown-900/8 bg-blush-100 md:hidden"
-          aria-label="Mobile"
-        >
-          <Container className="flex flex-col py-2">
-            {NAV.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="py-3 text-[15px] text-brown-800"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </Container>
-        </nav>
-      )}
+      {/* Mobile nav — animated slide-down */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.nav
+            key="mobile-nav"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={rm ? undefined : slideDownVariants}
+            className="border-t border-brown-900/8 bg-blush-100 md:hidden"
+            aria-label="Mobile"
+          >
+            <Container className="flex flex-col py-2">
+              {NAV.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="py-3 text-[15px] text-brown-800"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </Container>
+          </motion.nav>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
@@ -131,6 +183,7 @@ function UserMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const rm = useReducedMotion();
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -146,12 +199,13 @@ function UserMenu({
 
   return (
     <div ref={ref} className="relative ml-1">
-      <button
+      <motion.button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Account menu"
         aria-expanded={open}
         aria-haspopup="true"
+        whileTap={rm ? undefined : buttonTap}
         className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-rose-300 to-brown-700 ring-2 ring-cream text-white text-sm font-semibold transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-rose-400"
       >
         {user.photoURL ? (
@@ -159,53 +213,58 @@ function UserMenu({
         ) : (
           initials
         )}
-      </button>
+      </motion.button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-brown-900/10 bg-blush-50 shadow-[0_8px_32px_rgba(31,14,0,0.12)]">
-          {/* User info */}
-          <div className="border-b border-brown-900/8 px-4 py-3">
-            <p className="truncate text-sm font-medium text-brown-900">
-              {user.displayName ?? "Account"}
-            </p>
-            <p className="truncate text-xs text-brown-700">{user.email}</p>
-          </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="user-dropdown"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={rm ? undefined : dropdownVariants}
+            className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-2xl border border-brown-900/10 bg-blush-50 shadow-[0_8px_32px_rgba(31,14,0,0.12)]"
+          >
+            <div className="border-b border-brown-900/8 px-4 py-3">
+              <p className="truncate text-sm font-medium text-brown-900">
+                {user.displayName ?? "Account"}
+              </p>
+              <p className="truncate text-xs text-brown-700">{user.email}</p>
+            </div>
 
-          {/* Actions */}
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              if (sessionReady) {
-                router.push("/account");
-              } else {
-                // Cookie still being written — wait then navigate
-                const interval = setInterval(() => {
-                  if (document.cookie.includes("__session")) {
-                    clearInterval(interval);
-                    router.push("/account");
-                  }
-                }, 50);
-                // Hard fallback after 3s regardless
-                setTimeout(() => { clearInterval(interval); router.push("/account"); }, 3000);
-              }
-            }}
-            className="flex w-full items-center gap-3 px-4 py-3 text-sm text-brown-900 transition-colors hover:bg-rose-400/10"
-          >
-            <SettingsIcon className="h-4 w-4 shrink-0 text-brown-700" />
-            Profile settings
-            {!sessionReady && <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-rose-300" />}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setOpen(false); onLogout(); }}
-            className="flex w-full items-center gap-3 border-t border-brown-900/8 px-4 py-3 text-sm text-rose-500 transition-colors hover:bg-rose-400/10"
-          >
-            <LogOutIcon className="h-4 w-4 shrink-0" />
-            Log out
-          </button>
-        </div>
-      )}
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                if (sessionReady) {
+                  router.push("/account");
+                } else {
+                  const interval = setInterval(() => {
+                    if (document.cookie.includes("__session")) {
+                      clearInterval(interval);
+                      router.push("/account");
+                    }
+                  }, 50);
+                  setTimeout(() => { clearInterval(interval); router.push("/account"); }, 3000);
+                }
+              }}
+              className="flex w-full items-center gap-3 px-4 py-3 text-sm text-brown-900 transition-colors hover:bg-rose-400/10"
+            >
+              <SettingsIcon className="h-4 w-4 shrink-0 text-brown-700" />
+              Profile settings
+              {!sessionReady && <span className="ml-auto h-2 w-2 animate-pulse rounded-full bg-rose-300" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); onLogout(); }}
+              className="flex w-full items-center gap-3 border-t border-brown-900/8 px-4 py-3 text-sm text-rose-500 transition-colors hover:bg-rose-400/10"
+            >
+              <LogOutIcon className="h-4 w-4 shrink-0" />
+              Log out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

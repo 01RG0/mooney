@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
@@ -8,9 +9,18 @@ import { useAuth } from "@/context/AuthContext";
 import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
-import { computeShipping } from "@/lib/cart";
 import { type OrderConfirmation } from "@/lib/repository/orders";
 import { ArrowLeftIcon, CheckIcon } from "@/components/ui/icons";
+import {
+  calculateDeliveryFee,
+  getDeliveryFeeEstimate,
+  type DeliveryFeeResult,
+} from "@/lib/delivery";
+
+const MapPicker = dynamic(
+  () => import("@/components/map/MapPicker").then((m) => m.MapPicker),
+  { ssr: false },
+);
 
 type Fields = {
   fullName: string;
@@ -19,6 +29,7 @@ type Fields = {
   city: string;
   postalCode: string;
   country: string;
+  governorate: string;
 };
 
 const EMPTY: Fields = {
@@ -27,7 +38,8 @@ const EMPTY: Fields = {
   address: "",
   city: "",
   postalCode: "",
-  country: "",
+  country: "Egypt",
+  governorate: "",
 };
 
 const FIELD_LABELS: Record<keyof Fields, string> = {
@@ -37,7 +49,16 @@ const FIELD_LABELS: Record<keyof Fields, string> = {
   city: "City",
   postalCode: "Postal code",
   country: "Country",
+  governorate: "Governorate",
 };
+
+const REQUIRED_FIELDS: (keyof Fields)[] = [
+  "fullName",
+  "email",
+  "address",
+  "city",
+  "country",
+];
 
 export default function CheckoutPage() {
   const { items, subtotal, clear, isHydrated } = useCart();
@@ -46,15 +67,16 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>({});
   const [status, setStatus] = useState<"idle" | "submitting">("idle");
   const [orderError, setOrderError] = useState("");
-  const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(
-    null,
-  );
+  const [confirmation, setConfirmation] = useState<OrderConfirmation | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"orange-cash">("orange-cash");
   const [paymentPhone, setPaymentPhone] = useState("");
   const [businessNumber, setBusinessNumber] = useState("");
+  const [mapOpen, setMapOpen] = useState(false);
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [deliveryResult, setDeliveryResult] = useState<DeliveryFeeResult>(getDeliveryFeeEstimate());
 
-  const shipping = computeShipping(subtotal);
-  const total = subtotal + shipping;
+  const deliveryFee = deliveryResult.fee;
+  const total = subtotal + deliveryFee;
 
   useEffect(() => {
     fetch("/api/checkout/orange-cash-number")
@@ -65,7 +87,7 @@ export default function CheckoutPage() {
 
   function validate(): boolean {
     const next: Partial<Record<keyof Fields, string>> = {};
-    (Object.keys(fields) as (keyof Fields)[]).forEach((key) => {
+    REQUIRED_FIELDS.forEach((key) => {
       if (!fields[key].trim()) next[key] = `${FIELD_LABELS[key]} is required`;
     });
     if (fields.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
@@ -86,7 +108,12 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items,
-          shippingDetails: fields,
+          shippingDetails: {
+            ...fields,
+            ...(locationCoords && { coordinates: locationCoords }),
+            deliveryFee,
+            deliveryFeeConfirmed: deliveryResult.confirmed,
+          },
           total,
           paymentMethod: "orange-cash",
           paymentPhone,
@@ -106,6 +133,28 @@ export default function CheckoutPage() {
   function update(key: keyof Fields, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
     if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
+  }
+
+  function handleMapConfirm(result: {
+    address: string;
+    city: string;
+    governorate: string;
+    postalCode?: string;
+    lat: number;
+    lng: number;
+  }) {
+    setMapOpen(false);
+    setLocationCoords({ lat: result.lat, lng: result.lng });
+    setFields((prev) => ({
+      ...prev,
+      address: result.address || prev.address,
+      city: result.city || prev.city,
+      governorate: result.governorate || prev.governorate,
+      postalCode: result.postalCode || prev.postalCode,
+    }));
+    if (result.governorate) {
+      setDeliveryResult(calculateDeliveryFee(result.lat, result.lng, result.governorate));
+    }
   }
 
   // Confirmation screen
@@ -171,7 +220,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // Guard: nothing to check out.
   if (items.length === 0) {
     return (
       <Container className="py-20">
@@ -192,6 +240,15 @@ export default function CheckoutPage() {
 
   return (
     <Container className="py-10">
+      {mapOpen && (
+        <MapPicker
+          onConfirm={handleMapConfirm}
+          onClose={() => setMapOpen(false)}
+          initialLat={locationCoords?.lat}
+          initialLng={locationCoords?.lng}
+        />
+      )}
+
       <Link
         href="/cart"
         className="inline-flex items-center gap-2 text-sm text-brown-700 transition-colors hover:text-brown-900"
@@ -211,9 +268,46 @@ export default function CheckoutPage() {
       >
         {/* Shipping form */}
         <div>
-          <h2 className="font-display text-xl font-semibold text-brown-900">
-            Shipping details
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-semibold text-brown-900">
+              Shipping details
+            </h2>
+            <button
+              type="button"
+              onClick={() => setMapOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-brown-900/15 bg-white/60 px-3 py-1.5 text-xs font-medium text-brown-900 transition-colors hover:border-rose-400/60 hover:text-rose-500"
+            >
+              <svg
+                className="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              {locationCoords ? "Change location" : "Find on map"}
+            </button>
+          </div>
+
+          {locationCoords && (
+            <div className="mt-3 flex items-center gap-2 rounded-2xl border border-rose-400/30 bg-rose-400/5 px-4 py-2.5 text-xs text-brown-700">
+              <svg
+                className="h-3.5 w-3.5 shrink-0 text-rose-400"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden
+              >
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+              </svg>
+              Location confirmed on map
+            </div>
+          )}
+
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <Field
               className="sm:col-span-2"
@@ -248,6 +342,13 @@ export default function CheckoutPage() {
               autoComplete="address-level2"
             />
             <Field
+              name="governorate"
+              value={fields.governorate}
+              error={errors.governorate}
+              onChange={update}
+              autoComplete="address-level1"
+            />
+            <Field
               name="postalCode"
               value={fields.postalCode}
               error={errors.postalCode}
@@ -255,7 +356,6 @@ export default function CheckoutPage() {
               autoComplete="postal-code"
             />
             <Field
-              className="sm:col-span-2"
               name="country"
               value={fields.country}
               error={errors.country}
@@ -399,17 +499,30 @@ export default function CheckoutPage() {
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-brown-700">Shipping</dt>
+              <dt className="text-brown-700">
+                Delivery
+                {!deliveryResult.confirmed && (
+                  <span className="ml-1 text-xs text-brown-700/60">(est.)</span>
+                )}
+              </dt>
               <dd className="font-medium text-brown-900">
-                {shipping === 0 ? "Free" : formatPrice(shipping)}
+                {deliveryFee} EGP
               </dd>
             </div>
+            {!deliveryResult.confirmed && (
+              <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                {deliveryResult.note ?? "Confirm your location on the map for an exact delivery fee"}
+              </div>
+            )}
             <div className="flex justify-between border-t border-brown-900/10 pt-2">
               <dt className="font-display text-base font-semibold text-brown-900">
                 Total
               </dt>
               <dd className="font-display text-base font-semibold text-brown-900">
-                {formatPrice(total)}
+                {formatPrice(subtotal)}{" "}
+                <span className="text-sm font-normal text-brown-700">
+                  + {deliveryFee} EGP delivery
+                </span>
               </dd>
             </div>
           </dl>
@@ -422,7 +535,7 @@ export default function CheckoutPage() {
             disabled={status === "submitting"}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-400 px-7 py-3.5 text-base font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-60"
           >
-            {status === "submitting" ? "Placing order…" : `Place Order · ${formatPrice(total)}`}
+            {status === "submitting" ? "Placing order…" : `Place Order · ${formatPrice(subtotal)} + ${deliveryFee} EGP`}
           </button>
         </aside>
       </form>

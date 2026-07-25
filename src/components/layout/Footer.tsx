@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Logo } from "./Logo";
+import { getCategories } from "@/lib/repository/products";
 
-export function Footer() {
+export async function Footer() {
+  const categories = await getCategories();
+  const shopLinks: { label: string; href: string }[] = [
+    { label: "All products", href: "/shop" },
+    ...categories.slice(0, 3).map((c) => ({
+      label: c.name,
+      href: `/shop?category=${c.slug}`,
+    })),
+  ];
+
   return (
     <footer id="contact" className="mt-20 bg-brown-900 text-blush-100">
       <Container className="py-14">
@@ -15,20 +25,12 @@ export function Footer() {
             </p>
           </div>
 
-          <FooterColumn
-            title="Shop"
-            links={[
-              { label: "All products", href: "/shop" },
-              { label: "Baskets", href: "/shop?category=baskets" },
-              { label: "Florals", href: "/shop?category=florals" },
-              { label: "Stone Art", href: "/shop?category=stone-art" },
-            ]}
-          />
+          <FooterColumn title="Shop" links={shopLinks} />
           <FooterColumn
             title="Studio"
             links={[
               { label: "About", href: "/#story" },
-              { label: "Meet the artists", href: "/#community" },
+              { label: "Meet the artists", href: "https://www.instagram.com/mer0made/" },
               { label: "Promotions", href: "/#community" },
             ]}
           />
@@ -64,16 +66,20 @@ function FooterColumn({
         {title}
       </h3>
       <ul className="mt-4 space-y-2.5">
-        {links.map((link) => (
-          <li key={link.label}>
-            <Link
-              href={link.href}
-              className="text-sm text-blush-100/70 transition-colors hover:text-blush-100"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
+        {links.map((link) => {
+          const isExternal = link.href.startsWith("http");
+          return (
+            <li key={link.label}>
+              <Link
+                href={link.href}
+                {...(isExternal && { target: "_blank", rel: "noopener noreferrer" })}
+                className="text-sm text-blush-100/70 transition-colors hover:text-blush-100"
+              >
+                {link.label}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

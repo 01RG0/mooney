@@ -1,14 +1,15 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { uploadImage } from '@/lib/imagekit'
 
 export default function NewProductPage() {
   const router = useRouter();
+  const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const [form, setForm] = useState({
     name: "",
     slug: "",
-    category: "baskets",
+    category: "",
     price: "",
     image: "",
     description: "",
@@ -24,6 +25,21 @@ export default function NewProductPage() {
   const [viewerMin, setViewerMin] = useState(8)
   const [viewerMax, setViewerMax] = useState(24)
   const imgRef = useRef<HTMLInputElement>(null)
+
+  const [hasColors, setHasColors] = useState(false)
+  const [colorVariants, setColorVariants] = useState<{ id: string; name: string; hex: string; images: string[] }[]>([])
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((cats: { slug: string; name: string }[]) => {
+        setCategories(cats);
+        if (cats.length > 0 && !form.category) {
+          setForm((f) => ({ ...f, category: cats[0].slug }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   function handleChange(
     e: React.ChangeEvent<
@@ -50,6 +66,44 @@ export default function NewProductPage() {
     }
   }
 
+  function addVariant() {
+    setColorVariants((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), name: "", hex: "#000000", images: [] },
+    ])
+  }
+
+  function removeVariant(id: string) {
+    setColorVariants((prev) => prev.filter((v) => v.id !== id))
+  }
+
+  function updateVariantField(id: string, field: "name" | "hex", value: string) {
+    setColorVariants((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, [field]: value } : v))
+    )
+  }
+
+  function addVariantImage(id: string, url: string) {
+    setColorVariants((prev) =>
+      prev.map((v) => (v.id === id ? { ...v, images: [...v.images, url] } : v))
+    )
+  }
+
+  function removeVariantImage(variantId: string, imgIndex: number) {
+    setColorVariants((prev) =>
+      prev.map((v) =>
+        v.id === variantId
+          ? { ...v, images: v.images.filter((_, i) => i !== imgIndex) }
+          : v
+      )
+    )
+  }
+
+  const colorVariantsValid =
+    !hasColors ||
+    (colorVariants.length >= 2 &&
+      colorVariants.every((v) => v.name.trim() && v.images.length > 0))
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -65,6 +119,8 @@ export default function NewProductPage() {
           images,
           mainImageIndex,
           viewerCount: { enabled: viewerEnabled, min: viewerMin, max: viewerMax },
+          hasColors,
+          colorVariants,
         }),
       });
       if (res.ok) router.push("/admin/products");
@@ -114,10 +170,9 @@ export default function NewProductPage() {
             onChange={handleChange}
             className={inputCls}
           >
-            <option value="baskets">Baskets</option>
-            <option value="florals">Florals</option>
-            <option value="stone-art">Stone Art</option>
-            <option value="home-decor">Home Decor</option>
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>{c.name}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -197,6 +252,107 @@ export default function NewProductPage() {
             </div>
           )}
         </div>
+
+        {/* Color variant toggle */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="hasColors"
+            checked={hasColors}
+            onChange={(e) => setHasColors(e.target.checked)}
+            className="accent-rose-400"
+          />
+          <label htmlFor="hasColors" className="text-sm text-brown-700 font-sans cursor-pointer">
+            This product has multiple color variants
+          </label>
+        </div>
+
+        {/* Color variant editor */}
+        {hasColors && (
+          <div className="flex flex-col gap-3">
+            {colorVariants.map((variant) => (
+              <div
+                key={variant.id}
+                className="backdrop-blur-xl bg-white/20 border border-white/40 rounded-2xl p-4 flex flex-col gap-3"
+              >
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={variant.name}
+                    onChange={(e) => updateVariantField(variant.id, "name", e.target.value)}
+                    placeholder="Color name (e.g. Natural)"
+                    className={inputCls}
+                  />
+                  <input
+                    type="color"
+                    value={variant.hex}
+                    onChange={(e) => updateVariantField(variant.id, "hex", e.target.value)}
+                    className="h-9 w-14 rounded-lg cursor-pointer border border-white/60 bg-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeVariant(variant.id)}
+                    className="text-rose-500 text-sm underline whitespace-nowrap font-sans hover:text-rose-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div>
+                  <label className={labelCls}>Images for {variant.name || "this color"}</label>
+                  <label className="rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity cursor-pointer inline-block">
+                    Upload Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const f = e.target.files?.[0]
+                        if (!f) return
+                        const url = await uploadImage(f, 'products')
+                        addVariantImage(variant.id, url)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                  {variant.images.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {variant.images.map((url, i) => (
+                        <div key={i} className="relative h-12 w-12">
+                          <img src={url} alt="" className="h-full w-full rounded-xl object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantImage(variant.id, i)}
+                            className="absolute right-0 top-0 rounded-bl-xl rounded-tr-xl bg-black/40 px-1 text-xs text-white hover:bg-rose-500"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addVariant}
+              className="self-start rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity"
+            >
+              + Add color
+            </button>
+            {/* Validation errors */}
+            {hasColors && colorVariants.length < 2 && (
+              <p className="text-sm text-rose-500 font-sans">Add at least 2 color variants</p>
+            )}
+            {colorVariants.filter((v) => !v.name.trim()).map((v) => (
+              <p key={v.id + "-name"} className="text-sm text-rose-500 font-sans">Each color needs a name</p>
+            ))}
+            {colorVariants.filter((v) => v.name.trim() && v.images.length === 0).map((v) => (
+              <p key={v.id + "-img"} className="text-sm text-rose-500 font-sans">{v.name} needs at least one image</p>
+            ))}
+          </div>
+        )}
+
         <div>
           <label className="flex items-center gap-2 text-sm text-brown-700 font-sans">
             <input
@@ -285,7 +441,7 @@ export default function NewProductPage() {
         </div>
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || !colorVariantsValid}
           className="bg-rose-400 text-white rounded-full px-8 py-3 font-sans text-sm hover:opacity-90 transition-opacity disabled:opacity-50 self-start"
         >
           {saving ? "Saving…" : "Create Product"}

@@ -17,6 +17,11 @@
       { "name": "Natural", "hex": "#c8a06a" },
       { "name": "Honey", "hex": "#b07f43" }
     ],
+    "hasColors": true,
+    "colorVariants": [
+      { "id": "p-001-natural", "name": "Natural", "hex": "#c8a06a", "images": ["/products/natural-willow-basket.png"], "stock": 10 },
+      { "id": "p-001-honey", "name": "Honey", "hex": "#b07f43", "images": ["/products/natural-willow-basket.png"], "stock": 10 }
+    ],
     "maker": "Elara, Willow Studio",
     "isNew": true
   },
@@ -37,6 +42,11 @@
     "colors": [
       { "name": "Blush", "hex": "#d98ea3" },
       { "name": "Dusty Rose", "hex": "#c76f88" }
+    ],
+    "hasColors": true,
+    "colorVariants": [
+      { "id": "p-002-blush", "name": "Blush", "hex": "#d98ea3", "images": ["/products/blush-willow-basket.png"], "stock": 8 },
+      { "id": "p-002-dusty-rose", "name": "Dusty Rose", "hex": "#c76f88", "images": ["/products/blush-willow-basket.png"], "stock": 5 }
     ],
     "maker": "Elara, Willow Studio",
     "isNew": true

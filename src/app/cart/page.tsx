@@ -86,7 +86,13 @@ export default function CartPage() {
                     >
                       {item.name}
                     </Link>
-                    <p className="mt-0.5 text-sm text-brown-700">
+                    <p className="mt-0.5 flex items-center gap-1.5 text-sm text-brown-700">
+                      {item.colorHex && (
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-black/10"
+                          style={{ background: item.colorHex }}
+                        />
+                      )}
                       Colour: {item.color}
                     </p>
                   </div>

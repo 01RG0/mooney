@@ -22,6 +22,8 @@ interface AddItemInput {
   price: number;
   image: string;
   color: string;
+  colorHex?: string;
+  selectedColorId?: string;
   quantity?: number;
 }
 
@@ -151,7 +153,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // ── Cart mutations ───────────────────────────────────────────────────────
 
   const addItem = useCallback((input: AddItemInput) => {
-    const lineId = `${input.productId}::${input.color}`;
+    const lineId = input.selectedColorId
+      ? `${input.productId}::${input.selectedColorId}`
+      : `${input.productId}::${input.color}`;
     const qty = input.quantity ?? 1;
     setItems((prev) => {
       const existing = prev.find((i) => i.id === lineId);
@@ -170,6 +174,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           price: input.price,
           image: input.image,
           color: input.color,
+          colorHex: input.colorHex,
+          selectedColorId: input.selectedColorId,
           quantity: qty,
         },
       ];

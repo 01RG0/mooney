@@ -19,8 +19,8 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin()
     const body = await request.json()
-    const { name, slug, category, price, image, description, details, colors, maker, isNew, stock } = body
-    const product = { name, slug, category, price, image, description, details: details ?? [], colors: colors ?? [], maker, isNew: isNew ?? false, stock: stock ?? 0, createdAt: new Date().toISOString() }
+    const { name, slug, category, price, image, description, details, colors, maker, isNew, stock, images, mainImageIndex, viewerCount, hasColors, colorVariants } = body
+    const product = { name, slug, category, price, image, description, details: details ?? [], colors: colors ?? [], maker, isNew: isNew ?? false, stock: stock ?? 0, images: images ?? [], mainImageIndex: mainImageIndex ?? 0, viewerCount: viewerCount ?? null, hasColors: hasColors ?? false, colorVariants: colorVariants ?? [], createdAt: new Date().toISOString() }
     const ref = await getAdminDb().collection('products').add(product)
     return Response.json({ id: ref.id, ...product }, { status: 201 })
   } catch {

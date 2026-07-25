@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/types";
 import { BagIcon, CheckIcon } from "@/components/ui/icons";
 import { ViewerCounter } from '@/components/product/ViewerCounter'
 import { trackProductView } from "@/lib/analytics";
+import { buttonTap, useReducedMotion } from "@/lib/motion";
 
 /**
  * Premium, Apple-ad style product detail. The whole frame IS the soft rose
@@ -25,32 +27,63 @@ import { trackProductView } from "@/lib/analytics";
  */
 export function ProductDetailClient({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const rm = useReducedMotion();
   const [colorIndex, setColorIndex] = useState(0);
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
+
+  const useVariants = !!(product.hasColors && product.colorVariants?.length);
+  const activeVariant = useVariants ? product.colorVariants![selectedVariantIndex] : undefined;
 
   useEffect(() => {
     void trackProductView(product.id, product.slug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  const color = product.colors[colorIndex]?.name ?? "Default";
+  function handleVariantChange(idx: number) {
+    setSelectedVariantIndex(idx);
+    setActiveIndex(0);
+  }
+
+  const color = useVariants
+    ? (activeVariant?.name ?? "Default")
+    : (product.colors[colorIndex]?.name ?? "Default");
+
+  const variantImages = useVariants ? (activeVariant?.images ?? []) : null;
+  const galleryImages = variantImages ?? product.images ?? [];
 
   function handleAdd() {
-    addItem({
-      productId: product.id,
-      slug: product.slug,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      color,
-      quantity: 1,
-    });
+    if (useVariants && activeVariant) {
+      addItem({
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        image: activeVariant.images[0] ?? product.image,
+        color: activeVariant.name,
+        colorHex: activeVariant.hex,
+        selectedColorId: activeVariant.id,
+        quantity: 1,
+      });
+    } else {
+      addItem({
+        productId: product.id,
+        slug: product.slug,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        color,
+        quantity: 1,
+      });
+    }
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }
 
-  const displayImage = product.images?.length ? product.images[activeIndex] ?? product.image : product.image
+  const displayImage = galleryImages.length
+    ? galleryImages[activeIndex] ?? galleryImages[0] ?? product.image
+    : product.image
 
   return (
     <div className="flex justify-center">
@@ -72,19 +105,25 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
           {/* hero product — floating, no box around it */}
           <div className="flex h-[300px] items-center justify-center px-2 sm:h-[330px] lg:h-[460px]">
-            <Image
-              src={displayImage}
-              alt={product.name}
-              width={620}
-              height={620}
-              priority
-              className="h-full w-full max-w-[280px] object-contain drop-shadow-[0_30px_30px_rgba(0,0,0,0.18)] lg:max-w-[420px]"
-              style={{ animation: "floatY 5s ease-in-out infinite" }}
-            />
+            {/* layoutId matches ProductCard to enable shared-element morph on navigation */}
+            <motion.div
+              layoutId={rm ? undefined : `product-image-${product.id}`}
+              className="h-full w-full max-w-[280px] lg:max-w-[420px]"
+            >
+              <Image
+                src={displayImage}
+                alt={product.name}
+                width={620}
+                height={620}
+                priority
+                className="h-full w-full object-contain drop-shadow-[0_30px_30px_rgba(0,0,0,0.18)]"
+                style={{ animation: "floatY 5s ease-in-out infinite" }}
+              />
+            </motion.div>
           </div>
-          {(product.images?.length ?? 0) > 1 && (
+          {galleryImages.length > 1 && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {product.images!.map((img, i) => (
+              {galleryImages.map((img, i) => (
                 <button
                   key={i}
                   type="button"
@@ -100,7 +139,44 @@ export function ProductDetailClient({ product }: { product: Product }) {
           )}
 
           {/* ── Colour selector — rounded-square tiles, evenly spread ── */}
-          {product.colors.length > 0 && (
+          {useVariants ? (
+            <div className="mt-4 mb-2 flex justify-center gap-3.5 lg:mt-8 lg:mb-0">
+              {product.colorVariants!.map((v, i) => {
+                const isActive = i === selectedVariantIndex;
+                const isOutOfStock = v.stock === 0;
+                return (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => handleVariantChange(i)}
+                    aria-label={v.name}
+                    aria-pressed={isActive}
+                    title={v.name}
+                    className={`grid h-14 w-14 place-items-center rounded-[20px] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isOutOfStock ? 'opacity-40' : ''}`}
+                    style={{
+                      background: "#F8D9D8",
+                      boxShadow: isActive
+                        ? "inset 0 0 0 2px rgba(0,0,0,0.12), 0 8px 18px -8px rgba(0,0,0,0.25)"
+                        : "0 4px 12px -8px rgba(0,0,0,0.18)",
+                    }}
+                  >
+                    <span
+                      className="block rounded-full transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
+                      style={{
+                        width: 22,
+                        height: 22,
+                        transform: isActive ? "scale(1.12)" : "scale(1)",
+                        backgroundColor: v.hex,
+                        boxShadow: isActive
+                          ? "0 0 0 3px #FFF8F7, 0 0 0 5px rgba(0,0,0,0.22), 0 4px 8px -2px rgba(0,0,0,0.3)"
+                          : "0 2px 6px -1px rgba(0,0,0,0.25)",
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          ) : product.colors.length > 0 ? (
             <div className="mt-4 mb-2 flex justify-center gap-3.5 lg:mt-8 lg:mb-0">
               {product.colors.map((c, i) => {
                 const isActive = i === colorIndex;
@@ -136,7 +212,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 );
               })}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* ── Cream card — mobile: overlaps stage · desktop: right column ── */}
@@ -189,10 +265,11 @@ export function ProductDetailClient({ product }: { product: Product }) {
               {formatPrice(product.price)}
             </span>
 
-            <button
+            <motion.button
               type="button"
               onClick={handleAdd}
-              className="group inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold text-[#111111] shadow-[0_10px_24px_-8px_rgba(220,120,120,0.7)] transition-all duration-200 hover:brightness-105 active:scale-[0.97] lg:h-[52px] lg:px-8"
+              whileTap={rm ? undefined : buttonTap}
+              className="group inline-flex h-12 items-center gap-2 rounded-full px-6 text-[15px] font-semibold text-[#111111] shadow-[0_10px_24px_-8px_rgba(220,120,120,0.7)] transition-all duration-200 hover:brightness-105 lg:h-[52px] lg:px-8"
               style={{ background: "#F5B9B7" }}
             >
               {added ? (
@@ -206,7 +283,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
                   <BagIcon className="h-[18px] w-[18px]" />
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
