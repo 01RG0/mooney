@@ -150,7 +150,8 @@
 }
 
 @media (max-width: 768px) {
-  .aurora { display: none; }
+  .aurora .rainbow:nth-child(n+9) { display: none; }
+  .aurora { opacity: 0.7; }
 }
 
 /* Transform-based sweep (GPU-composited) for a smoother drift than
