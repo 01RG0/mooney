@@ -45,7 +45,14 @@ export default function CategoriesPage() {
   useEffect(() => { void loadCategories() }, [])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setForm(f => ({ ...f, [name]: value }))
+    if (name === 'name' && !editingSlug) {
+      setForm(f => ({
+        ...f,
+        slug: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      }))
+    }
   }
 
   function startEdit(c: Category) {
@@ -110,10 +117,7 @@ export default function CategoriesPage() {
             {editingSlug ? 'Edit Category' : 'New Category'}
           </h2>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className={labelCls}>Slug</label>
-              <input name="slug" value={form.slug} onChange={handleChange} required disabled={!!editingSlug} className={inputCls} />
-            </div>
+            <input type="hidden" name="slug" value={form.slug} />
             <div>
               <label className={labelCls}>Name</label>
               <input name="name" value={form.name} onChange={handleChange} required className={inputCls} />

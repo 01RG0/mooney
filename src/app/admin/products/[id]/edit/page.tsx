@@ -69,6 +69,12 @@ export default function EditProductPage() {
     } else {
       setForm(f => ({ ...f, [name]: value }))
     }
+    if (name === 'name') {
+      setForm(f => ({
+        ...f,
+        slug: value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+      }))
+    }
   }
 
   function addVariant() {
@@ -150,7 +156,7 @@ export default function EditProductPage() {
       <h1 className='font-display text-4xl text-brown-900 mb-8'>Edit Product</h1>
       <form onSubmit={handleSubmit} className='backdrop-blur-xl bg-white/30 border border-white/40 rounded-3xl p-8 flex flex-col gap-5'>
         <div><label className={labelCls}>Name</label><input name='name' value={form.name} onChange={handleChange} required className={inputCls} /></div>
-        <div><label className={labelCls}>Slug</label><input name='slug' value={form.slug} onChange={handleChange} required className={inputCls} /></div>
+        <input type="hidden" name="slug" value={form.slug} />
         <div>
           <label className={labelCls}>Category</label>
           <select name='category' value={form.category} onChange={handleChange} className={inputCls}>

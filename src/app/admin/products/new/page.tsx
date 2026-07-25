@@ -152,16 +152,7 @@ export default function NewProductPage() {
             className={inputCls}
           />
         </div>
-        <div>
-          <label className={labelCls}>Slug</label>
-          <input
-            name="slug"
-            value={form.slug}
-            onChange={handleChange}
-            required
-            className={inputCls}
-          />
-        </div>
+        <input type="hidden" name="slug" value={form.slug} />
         <div>
           <label className={labelCls}>Category</label>
           <select
