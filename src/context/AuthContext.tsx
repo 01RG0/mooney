@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         // Write the __session cookie, then mark it ready so protected links unlock.
         setSessionReady(false);
-        firebaseUser.getIdToken().then((idToken) =>
+        // Force-refresh so custom claims (e.g. role:admin) set after last login
+        // are always present in the session cookie.
+        firebaseUser.getIdToken(/* forceRefresh */ true).then((idToken) =>
           fetch("/api/auth/session", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
