@@ -37,9 +37,9 @@ export async function Footer() {
           <FooterColumn
             title="Care"
             links={[
-              { label: "Shipping", href: "/#contact" },
-              { label: "Returns", href: "/#contact" },
-              { label: "Get in touch", href: "/#contact" },
+              { label: "Shipping", href: "/account/orders" },
+              { label: "Returns", href: "/account/orders" },
+              { label: "Get in touch", href: "https://www.instagram.com/mer0made/" },
             ]}
           />
         </div>

@@ -51,6 +51,8 @@ const ANALYTICS_SUBCOLLECTIONS = [
   { parent: "productViews", sub: "products" },
   { parent: "searchTerms",  sub: "terms"    },
   { parent: "cartEvents",   sub: "events"   },
+  { parent: "pageViews",    sub: "daily"    },
+  { parent: "pageViews",    sub: "counters" },
 ];
 
 async function initCollection(ref, label) {

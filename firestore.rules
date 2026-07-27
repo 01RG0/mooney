@@ -64,6 +64,12 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // ─── analytics/pageViews ─────────────────────────────────────────────────
+    match /analytics/pageViews {
+      allow read:  if isAdmin();
+      allow write: if true;
+    }
+
     // ─── analytics/cartEvents ─────────────────────────────────────────────────
     match /analytics/cartEvents {
       allow read:  if isAdmin();

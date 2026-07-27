@@ -69,6 +69,32 @@ export async function trackSearch(term: string) {
   }
 }
 
+// ─── Website page view tracking ─────────────────────────────────────────────
+
+export async function trackPageView(path: string) {
+  if (!path || path.startsWith("/admin")) return; // don't track admin views
+  try {
+    const db = getFirestore();
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // Daily counter
+    await setDoc(
+      doc(db, "analytics", "pageViews", "daily", today),
+      { date: today, count: increment(1) },
+      { merge: true },
+    );
+
+    // Total counter
+    await setDoc(
+      doc(db, "analytics", "pageViews", "counters", "total"),
+      { count: increment(1), updatedAt: new Date().toISOString() },
+      { merge: true },
+    );
+  } catch {
+    // non-fatal
+  }
+}
+
 // ─── Cart event tracking ───────────────────────────────────────────────────
 export type CartEventType = "add_to_cart" | "remove_from_cart" | "checkout_started";
 

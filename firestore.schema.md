@@ -16,6 +16,8 @@
 | `analytics/productViews/products` | Product ID | View counts per product |
 | `analytics/searchTerms/terms` | Normalized term | Search frequency counts |
 | `analytics/cartEvents/events` | Auto ID | Add/remove/checkout events |
+| `analytics/pageViews/daily` | YYYY-MM-DD | Daily website page view counts |
+| `analytics/pageViews/counters/total` | `total` (singleton) | Total website page views since launch |
 
 ---
 
@@ -298,6 +300,24 @@ Document ID = uppercase coupon code (e.g. `WELCOME10`)
 }
 ```
 
+### `analytics/pageViews/daily/{date}`
+
+```
+{
+  date:   string   // YYYY-MM-DD
+  count:  number   // incremented via FieldValue.increment(1)
+}
+```
+
+### `analytics/pageViews/counters/total`
+
+```
+{
+  count:      number
+  updatedAt:  ISO string
+}
+```
+
 ---
 
 ## Security Summary
@@ -313,4 +333,5 @@ Document ID = uppercase coupon code (e.g. `WELCOME10`)
 | notifications | — | own | — | create |
 | coupons | — | authenticated | — | ✓ |
 | stockAlerts | — | own | create/delete own | ✓ |
-| analytics | — | — | increment | read |
+| analytics (productViews, searchTerms) | — | — | increment | read |
+| analytics (pageViews) | — | — | increment | read |

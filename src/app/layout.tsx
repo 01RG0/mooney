@@ -7,6 +7,7 @@ import { AuroraBackground } from "@/components/layout/AuroraBackground";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
+import { PageViewTracker } from "@/components/layout/PageViewTracker";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -57,6 +58,7 @@ export default function RootLayout({
             <main className="flex-1">
               <PageTransition>{children}</PageTransition>
             </main>
+            <PageViewTracker />
             <Footer />
           </CartProvider>
         </AuthProvider>
