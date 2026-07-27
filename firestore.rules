@@ -53,48 +53,31 @@ service cloud.firestore {
 
     // ─── analytics/productViews ───────────────────────────────────────────────
     // Anyone can increment views (anonymous included); only admins can read
-    match /analytics/productViews {
+    match /analytics/productViews/{document=**} {
       allow read:  if isAdmin();
       allow write: if true;
     }
 
     // ─── analytics/searchTerms ────────────────────────────────────────────────
-    match /analytics/searchTerms {
+    match /analytics/searchTerms/{document=**} {
       allow read:  if isAdmin();
       allow write: if true;
     }
 
     // ─── analytics/pageViews ─────────────────────────────────────────────────
-    match /analytics/pageViews {
+    // Covers daily/{date} and counters/total subcollections
+    match /analytics/pageViews/{document=**} {
       allow read:  if isAdmin();
       allow write: if true;
     }
 
     // ─── analytics/cartEvents ─────────────────────────────────────────────────
-    match /analytics/cartEvents {
+    match /analytics/cartEvents/{document=**} {
       allow read:  if isAdmin();
       allow write: if isSignedIn();
     }
 
-    // ─── productViews subcollection ───────────────────────────────────────────
-    // One doc per product, incremented on every view
-    match /analytics/productViews/products/{productId} {
-      allow read:  if isAdmin();
-      allow write: if true;
-    }
-
-    // ─── searchTerms subcollection ────────────────────────────────────────────
-    match /analytics/searchTerms/terms/{termId} {
-      allow read:  if isAdmin();
-      allow write: if true;
-    }
-
-    // ─── cartEvents subcollection ─────────────────────────────────────────────
-    // add_to_cart / remove_from_cart / checkout_started events
-    match /analytics/cartEvents/events/{eventId} {
-      allow read:  if isAdmin();
-      allow write: if isSignedIn();
-    }
+    // NOTE: Subcollection rules are now covered by the wildcard matches above.
 
     // ─── reviews ──────────────────────────────────────────────────────────────
     // Authenticated users can create reviews for products they ordered (enforced in API)
