@@ -1,7 +1,5 @@
 "use client";
 
-const FREEIMAGE_KEY = "6d207e02198a847aa98d0a2a901485a5";
-
 export async function uploadToStorage(
   file: File,
   _folder: string,
@@ -10,26 +8,22 @@ export async function uploadToStorage(
   onProgress?.(50);
 
   const form = new FormData();
-  form.append("key", FREEIMAGE_KEY);
-  form.append("action", "upload");
-  form.append("source", file);
-  form.append("format", "json");
+  form.append("file", file);
 
-  const res = await fetch("https://freeimage.host/api/1/upload", {
+  const res = await fetch("/api/upload/freeimage", {
     method: "POST",
     body: form,
   });
 
   const data = await res.json() as {
-    status_code: number;
-    image?: { url: string };
-    error?: { message: string };
+    url?: string;
+    error?: string;
   };
 
-  if (data.status_code !== 200 || !data.image?.url) {
-    throw new Error(data.error?.message ?? "Upload failed");
+  if (!res.ok || !data.url) {
+    throw new Error(data.error ?? "Upload failed");
   }
 
   onProgress?.(100);
-  return data.image.url;
+  return data.url;
 }

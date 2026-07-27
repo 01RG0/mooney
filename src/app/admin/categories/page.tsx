@@ -15,17 +15,23 @@ export default function CategoriesPage() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState(false)
   const imageInputRef = useRef<HTMLInputElement>(null)
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setUploadError('')
+    setUploadSuccess(false)
     setUploading(true)
     try {
       const url = await uploadToStorage(file, 'categories')
       setForm(f => ({ ...f, image: url }))
+      setUploadSuccess(true)
+      setTimeout(() => setUploadSuccess(false), 2500)
     } catch (err: unknown) {
-      alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+      setUploadError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -137,10 +143,23 @@ export default function CategoriesPage() {
                     type="button"
                     onClick={() => imageInputRef.current?.click()}
                     disabled={uploading}
-                    className="rounded-full border border-brown-900/20 bg-white/50 px-4 py-2 text-sm text-brown-900 hover:bg-white/80 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-full border border-brown-900/20 bg-white/50 px-4 py-2 text-sm text-brown-900 hover:bg-white/80 disabled:opacity-50 transition-colors"
                   >
-                    {uploading ? 'Uploading…' : form.image ? 'Change image' : 'Upload image'}
+                    {uploading ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Uploading…
+                      </>
+                    ) : uploadSuccess ? (
+                      <><svg className="h-4 w-4 text-green-600" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>Uploaded!</>
+                    ) : form.image ? 'Change image' : 'Upload image'}
                   </button>
+                  {uploadError && (
+                    <p className="text-xs text-rose-500 font-sans">{uploadError}</p>
+                  )}
                   {form.image && (
                     <button type="button" onClick={() => setForm(f => ({ ...f, image: '' }))} className="text-xs text-rose-500 hover:underline text-left">
                       Remove

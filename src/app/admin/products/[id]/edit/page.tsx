@@ -11,6 +11,10 @@ export default function EditProductPage() {
   const [form, setForm] = useState({ name: '', slug: '', category: '', price: '', image: '', description: '', details: '', maker: '', isNew: false, stock: '0' })
   const [saving, setSaving] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const [variantUploading, setVariantUploading] = useState<string | null>(null)
+  const [variantError, setVariantError] = useState<string | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [mainImageIndex, setMainImageIndex] = useState(0)
   const [viewerEnabled, setViewerEnabled] = useState(false)
@@ -173,9 +177,15 @@ export default function EditProductPage() {
           <button
             type="button"
             onClick={() => imgRef.current?.click()}
-            className={`rounded-full px-4 py-2 text-sm text-white transition-opacity ${uploadProgress !== null ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}
+            disabled={uploading}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-white transition-opacity ${uploading ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}
           >
-            {uploadProgress !== null ? `Uploading… ${uploadProgress}%` : 'Upload Image'}
+            {uploading ? (
+              <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>Uploading… {uploadProgress}%</>
+            ) : 'Upload Image'}
           </button>
           <input
             ref={imgRef}
@@ -186,6 +196,8 @@ export default function EditProductPage() {
             onChange={async (e) => {
               const files = Array.from(e.target.files ?? [])
               if (!files.length) return
+              setUploadError('')
+              setUploading(true)
               try {
                 for (const f of files) {
                   const url = await uploadToStorage(f, 'products', p => setUploadProgress(p))
@@ -197,13 +209,15 @@ export default function EditProductPage() {
                   setUploadProgress(null)
                 }
               } catch (err: unknown) {
-                alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+                setUploadError(err instanceof Error ? err.message : 'Upload failed')
               } finally {
+                setUploading(false)
                 setUploadProgress(null)
                 e.target.value = ''
               }
             }}
           />
+          {uploadError && <p className="mt-1 text-sm text-rose-500 font-sans">{uploadError}</p>}
           {images.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
               {images.map((url, i) => (
@@ -283,8 +297,13 @@ export default function EditProductPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Images for {variant.name || 'this color'}</label>
-                  <label className='rounded-full bg-rose-400 px-4 py-2 text-sm text-white hover:opacity-90 transition-opacity cursor-pointer inline-block'>
-                    Upload Image
+                  <label className={`rounded-full px-4 py-2 text-sm text-white transition-opacity cursor-pointer inline-flex items-center gap-2 ${variantUploading === variant.id ? 'bg-rose-300 opacity-60 pointer-events-none' : 'bg-rose-400 hover:opacity-90'}`}>
+                    {variantUploading === variant.id ? (
+                      <><svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>Uploading…</>
+                    ) : 'Upload Image'}
                     <input
                       type='file'
                       accept='image/*'
@@ -292,16 +311,23 @@ export default function EditProductPage() {
                       onChange={async (e) => {
                         const f = e.target.files?.[0]
                         if (!f) return
+                        setVariantError(null)
+                        setVariantUploading(variant.id)
                         try {
                           const url = await uploadToStorage(f, 'products')
                           addVariantImage(variant.id, url)
                         } catch (err: unknown) {
-                          alert('Upload failed: ' + (err instanceof Error ? err.message : String(err)))
+                          setVariantError(err instanceof Error ? err.message : 'Upload failed')
+                        } finally {
+                          setVariantUploading(null)
+                          e.target.value = ''
                         }
-                        e.target.value = ''
                       }}
                     />
                   </label>
+                  {variantError && variantUploading !== variant.id && (
+                    <p className="mt-1 text-sm text-rose-500 font-sans">{variantError}</p>
+                  )}
                   {variant.images.length > 0 && (
                     <div className='mt-2 flex flex-wrap gap-2'>
                       {variant.images.map((url, i) => (

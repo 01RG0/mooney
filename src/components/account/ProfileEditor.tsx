@@ -43,6 +43,8 @@ export function ProfileEditor({
   const [pwSuccess, setPwSuccess] = useState(false)
   const [pwSaving, setPwSaving] = useState(false)
   const avatarRef = useRef<HTMLInputElement>(null)
+  const [avatarUploading, setAvatarUploading] = useState(false)
+  const [avatarError, setAvatarError] = useState('')
 
   const email = firebaseUser?.email ?? profile.email ?? ''
   const initials = (name || email || '?')[0].toUpperCase()
@@ -51,13 +53,24 @@ export function ProfileEditor({
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    setAvatarError('')
+    setAvatarUploading(true)
     const fd = new FormData()
     fd.append('file', file)
-    const res = await fetch('/api/account/avatar', { method: 'POST', body: fd })
-    if (res.ok) {
-      const data = await res.json()
-      setAvatarUrl(data.url)
-      if (firebaseUser) await updateProfile(firebaseUser, { photoURL: data.url })
+    try {
+      const res = await fetch('/api/account/avatar', { method: 'POST', body: fd })
+      if (res.ok) {
+        const data = await res.json()
+        setAvatarUrl(data.url)
+        if (firebaseUser) await updateProfile(firebaseUser, { photoURL: data.url })
+      } else {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Upload failed')
+      }
+    } catch (err: unknown) {
+      setAvatarError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setAvatarUploading(false)
     }
     e.target.value = ''
   }
@@ -127,10 +140,19 @@ export function ProfileEditor({
             <button
               type="button"
               onClick={() => avatarRef.current?.click()}
-              className="text-sm text-rose-400 hover:underline"
+              disabled={avatarUploading}
+              className="inline-flex items-center gap-1.5 text-sm text-rose-400 hover:underline disabled:opacity-50 disabled:no-underline"
             >
-              Change photo
+              {avatarUploading ? (
+                <><svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>Uploading…</>
+              ) : 'Change photo'}
             </button>
+            {avatarError && (
+              <p className="mt-1 text-xs text-rose-500">{avatarError}</p>
+            )}
             <p className="mt-0.5 text-xs text-brown-700">JPG, PNG or WebP · max 2 MB</p>
           </div>
           <input ref={avatarRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
