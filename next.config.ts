@@ -20,8 +20,9 @@ const nextConfig: NextConfig = {
       // Firebase Storage (existing stored URLs — keep for backwards compat)
       { protocol: "https", hostname: "firebasestorage.googleapis.com" },
       { protocol: "https", hostname: "storage.googleapis.com" },
-      // freeimage.host (new image hosting)
+      // freeimage.host / iili.io (image hosting & CDN)
       { protocol: "https", hostname: "freeimage.host" },
+      { protocol: "https", hostname: "iili.io" },
     ],
   },
   // Allow Firebase signInWithPopup to read window.closed on the opener.
