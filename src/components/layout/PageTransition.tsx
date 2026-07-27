@@ -10,17 +10,19 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
   const variants = rm ? pageVariantsReduced : pageVariants;
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        variants={variants}
-        style={{ flex: 1, display: "flex", flexDirection: "column" }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.div
+          key={pathname}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          variants={variants}
+          style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
