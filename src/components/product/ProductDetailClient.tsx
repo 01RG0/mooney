@@ -86,7 +86,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
     : product.image
 
   const descriptionText =
-    product.description?.trim() || "No description available.";
+    product.description?.trim() || " ";
 
   return (
     <div className="flex w-full flex-col items-center">
