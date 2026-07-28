@@ -1,7 +1,15 @@
 'use client'
 import { useState } from 'react'
 
-const VALID_STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
+const STATUSES: { value: string; label: string }[] = [
+  { value: 'pending', label: 'Pending' },
+  { value: 'pending-payment', label: 'Pending Payment' },
+  { value: 'pending-manual-confirmation', label: 'Awaiting Payment Confirm' },
+  { value: 'confirmed', label: 'Confirmed' },
+  { value: 'shipped', label: 'Out for Delivery' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'cancelled', label: 'Cancelled' },
+]
 
 export function StatusSelector({ orderId, currentStatus }: { orderId: string; currentStatus: string }) {
   const [selected, setSelected] = useState(currentStatus)
@@ -17,7 +25,11 @@ export function StatusSelector({ orderId, currentStatus }: { orderId: string; cu
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: selected }),
       })
-      setMsg(res.ok ? 'Status updated' : 'Failed to update')
+      if (res.ok) {
+        window.location.reload()
+      } else {
+        setMsg('Failed to update')
+      }
     } catch {
       setMsg('Failed to update')
     } finally {
@@ -30,23 +42,21 @@ export function StatusSelector({ orderId, currentStatus }: { orderId: string; cu
       <select
         value={selected}
         onChange={e => setSelected(e.target.value)}
-        className="bg-white/50 border border-white/60 rounded-xl px-3 py-1.5 text-brown-900 font-sans text-sm focus:outline-none focus:ring-2 focus:ring-rose-400 capitalize"
+        className="bg-white/50 border border-white/60 rounded-xl px-3 py-1.5 text-brown-900 font-sans text-sm focus:outline-none focus:ring-2 focus:ring-rose-400"
       >
-        {VALID_STATUSES.map(s => (
-          <option key={s} value={s} className="capitalize">{s}</option>
+        {STATUSES.map(s => (
+          <option key={s.value} value={s.value}>{s.label}</option>
         ))}
       </select>
       <button
         onClick={handleUpdate}
-        disabled={saving}
+        disabled={saving || selected === currentStatus}
         className="bg-rose-400 text-white rounded-full px-4 py-1.5 text-sm font-sans hover:opacity-90 disabled:opacity-50 transition-opacity"
       >
-        {saving ? 'Saving…' : 'Update'}
+        {saving ? 'Saving…' : 'Update Status'}
       </button>
       {msg && (
-        <span className={msg === 'Status updated' ? 'text-sm text-green-700 font-sans' : 'text-sm text-rose-500 font-sans'}>
-          {msg}
-        </span>
+        <span className="text-sm text-rose-500 font-sans">{msg}</span>
       )}
     </div>
   )
