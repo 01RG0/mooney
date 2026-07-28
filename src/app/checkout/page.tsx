@@ -26,6 +26,7 @@ const MapPicker = dynamic(
 type Fields = {
   fullName: string;
   email: string;
+  phone: string;
   address: string;
   city: string;
   postalCode: string;
@@ -36,6 +37,7 @@ type Fields = {
 const EMPTY: Fields = {
   fullName: "",
   email: "",
+  phone: "",
   address: "",
   city: "",
   postalCode: "",
@@ -46,6 +48,7 @@ const EMPTY: Fields = {
 const FIELD_LABELS: Record<keyof Fields, string> = {
   fullName: "Full name",
   email: "Email",
+  phone: "Phone number",
   address: "Street address",
   city: "City",
   postalCode: "Postal code",
@@ -56,6 +59,7 @@ const FIELD_LABELS: Record<keyof Fields, string> = {
 const REQUIRED_FIELDS: (keyof Fields)[] = [
   "fullName",
   "email",
+  "phone",
   "address",
   "city",
   "country",
@@ -104,6 +108,9 @@ export default function CheckoutPage() {
     if (fields.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email)) {
       next.email = "Enter a valid email address";
     }
+    if (fields.phone && !/^[+\d\s\-()]{7,20}$/.test(fields.phone)) {
+      next.phone = "Enter a valid phone number";
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -127,6 +134,7 @@ export default function CheckoutPage() {
           items,
           shippingDetails: {
             ...fields,
+            phone: fields.phone,
             ...(locationCoords && { coordinates: locationCoords }),
             deliveryFee,
             deliveryFeeConfirmed: deliveryResult.confirmed,
@@ -399,6 +407,15 @@ export default function CheckoutPage() {
               error={errors.email}
               onChange={update}
               autoComplete="email"
+            />
+            <Field
+              className="sm:col-span-2"
+              name="phone"
+              type="tel"
+              value={fields.phone}
+              error={errors.phone}
+              onChange={update}
+              autoComplete="tel"
             />
             <div className="sm:col-span-2">
               <label htmlFor="address" className="block text-sm font-medium text-brown-900">Street address</label>

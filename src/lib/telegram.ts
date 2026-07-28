@@ -23,7 +23,7 @@ export function formatOrderMessage(order: OrderWithFee): string {
     ? `\n🗺 <a href="https://maps.google.com/?q=${s.coordinates.lat},${s.coordinates.lng}">View on map</a>`
     : ''
   const deliveryFee = order.deliveryCost ?? order.shippingCost ?? 0
-  const phone = (s as { phone?: string }).phone
+  const phone = s.phone
 
   return `
 🛍 <b>Order</b> — <code>${order.id}</code>

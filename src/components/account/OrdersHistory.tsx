@@ -34,19 +34,87 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 }
 
+const CANCEL_WINDOW_MS = 2 * 60 * 60 * 1000
+
+function canCancel(order: Order): boolean {
+  if (['cancelled', 'shipped', 'delivered'].includes(order.status)) return false
+  return Date.now() - new Date(order.createdAt).getTime() < CANCEL_WINDOW_MS
+}
+
+function CancelButton({ order, onCancelled }: { order: Order; onCancelled: () => void }) {
+  const [cancelling, setCancelling] = useState(false)
+  const [error, setError] = useState('')
+  const [timeLeft, setTimeLeft] = useState('')
+
+  useEffect(() => {
+    function tick() {
+      const elapsed = Date.now() - new Date(order.createdAt).getTime()
+      const remaining = CANCEL_WINDOW_MS - elapsed
+      if (remaining <= 0) { setTimeLeft(''); return }
+      const m = Math.floor(remaining / 60000)
+      const s = Math.floor((remaining % 60000) / 1000)
+      setTimeLeft(`${m}m ${s}s left`)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [order.createdAt])
+
+  if (!timeLeft) return null
+
+  async function handleCancel() {
+    if (!confirm('Are you sure you want to cancel this order?')) return
+    setCancelling(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/account/orders/${order.id}/cancel`, { method: 'POST' })
+      if (!res.ok) {
+        const d = await res.json()
+        setError(d.error ?? 'Could not cancel order')
+        return
+      }
+      onCancelled()
+    } catch {
+      setError('Something went wrong')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  return (
+    <div className="mt-3 flex flex-col gap-1">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={cancelling}
+          className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-100 transition-colors disabled:opacity-50"
+        >
+          {cancelling ? 'Cancelling…' : 'Cancel Order'}
+        </button>
+        <span className="text-xs text-brown-600">{timeLeft} to cancel</span>
+      </div>
+      {error && <p className="text-xs text-rose-500">{error}</p>}
+    </div>
+  )
+}
+
 export function OrdersHistory() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<string | null>(null)
 
-  useEffect(() => {
+  function loadOrders() {
+    setLoading(true)
     fetch('/api/account/orders')
       .then((r) => (r.ok ? r.json() : Promise.reject(r)))
       .then(setOrders)
       .catch(() => setError('Could not load orders. Please try again.'))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  useEffect(() => { loadOrders() }, [])
 
   if (loading) {
     return (
@@ -140,6 +208,15 @@ export function OrdersHistory() {
                   </tr>
                 </tfoot>
               </table>
+
+              {canCancel(order) && (
+                <CancelButton
+                  order={order}
+                  onCancelled={() => {
+                    setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: 'cancelled' } : o))
+                  }}
+                />
+              )}
             </div>
           )}
         </div>

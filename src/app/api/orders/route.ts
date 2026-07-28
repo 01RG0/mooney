@@ -33,7 +33,7 @@ const CoordinatesSchema = z.object({
 const ShippingDetailsSchema = z.object({
   fullName: z.string().min(1),
   email: z.string().email(),
-  phone: z.string().optional(),
+  phone: z.string().min(7, 'Phone number is required'),
   address: z.string().min(1),
   city: z.string().min(1),
   postalCode: z.string().optional().default(''),
