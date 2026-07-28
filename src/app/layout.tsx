@@ -38,6 +38,9 @@ export const metadata: Metadata = {
   title: "Meromade — The Art of Handmade in Every Piece",
   description:
     "A curated collection of artisan-made baskets, florals, stone art, and home décor. Handmade, one piece at a time.",
+  icons: {
+    icon: "/favicon-whale.png",
+  },
 };
 
 export default function RootLayout({

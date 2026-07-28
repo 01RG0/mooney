@@ -15,8 +15,8 @@ export function Logo({ className = "" }: { className?: string }) {
       <Image
         src="/logo.png"
         alt=""
-        width={681}
-        height={710}
+        width={512}
+        height={487}
         priority
         sizes="36px"
         className="h-9 w-auto"
