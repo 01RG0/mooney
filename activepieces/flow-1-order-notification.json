@@ -1,0 +1,35 @@
+{
+  "name": "New Order Telegram Notification",
+  "flows": [
+    {
+      "displayName": "New Order Telegram Notification",
+      "valid": false,
+      "schemaVersion": "22",
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Webhook Trigger",
+        "type": "EMPTY",
+        "valid": false,
+        "settings": {},
+        "lastUpdatedDate": "2024-01-01T00:00:00.000Z",
+        "nextAction": {
+          "name": "send_telegram",
+          "displayName": "Send Telegram Message",
+          "type": "PIECE",
+          "valid": false,
+          "settings": {
+            "pieceName": "@activepieces/piece-telegram-bot",
+            "pieceVersion": "~0.6.0",
+            "actionName": "send_text_message",
+            "input": {
+              "chat_id": "REPLACE_WITH_YOUR_ADMIN_CHAT_ID",
+              "text": "New Order"
+            },
+            "propertySettings": {}
+          },
+          "lastUpdatedDate": "2024-01-01T00:00:00.000Z"
+        }
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { getAdminDb } from '@/lib/firebase-admin'
 import { getSessionUser } from '@/lib/session'
 import { calculateDeliveryFee, getDeliveryFeeEstimate } from '@/lib/delivery'
+import { sendTelegramMessage, formatOrderMessage, getOrderKeyboard } from '@/lib/telegram'
 
 export const dynamic = 'force-dynamic'
 
@@ -143,6 +144,34 @@ export async function POST(request: NextRequest) {
     }
 
     await db.collection('orders').doc(orderId).set(order)
+
+    // ── Telegram notification (non-blocking) ──────────────────────────────────
+    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID
+    if (chatId && process.env.TELEGRAM_BOT_TOKEN) {
+      sendTelegramMessage(
+        chatId,
+        formatOrderMessage(order as Parameters<typeof formatOrderMessage>[0]),
+        getOrderKeyboard(orderId, order.status),
+      ).catch((e) => console.error('[telegram] notify failed', e))
+    }
+
+    // ── Pipedream order notification webhook (non-blocking) ───────────────────
+    const pipedreamUrl = process.env.PIPEDREAM_ORDER_WEBHOOK_URL
+    if (pipedreamUrl) {
+      fetch(pipedreamUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          status: order.status,
+          total: String(total),
+          paymentMethod: paymentMethod ?? 'N/A',
+          shippingDetails: order.shippingDetails,
+          items: order.items.map((i) => JSON.stringify(i)),
+          deliveryCost: String(deliveryCost),
+        }),
+      }).catch((e) => console.error('[pipedream] notify failed', e))
+    }
 
     return Response.json({
       orderId,

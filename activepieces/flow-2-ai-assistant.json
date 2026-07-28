@@ -1,0 +1,94 @@
+{
+  "name": "Telegram AI Admin Assistant",
+  "flows": [
+    {
+      "displayName": "Telegram AI Admin Assistant",
+      "valid": false,
+      "schemaVersion": "22",
+      "trigger": {
+        "name": "trigger",
+        "displayName": "Webhook Trigger",
+        "type": "EMPTY",
+        "valid": false,
+        "settings": {},
+        "lastUpdatedDate": "2024-01-01T00:00:00.000Z",
+        "nextAction": {
+          "name": "get_stats",
+          "displayName": "Get Today Stats",
+          "type": "PIECE",
+          "valid": false,
+          "settings": {
+            "pieceName": "@activepieces/piece-http",
+            "pieceVersion": "~0.6.0",
+            "actionName": "send_request",
+            "input": {
+              "method": "GET",
+              "url": "https://meromade.zone.id/api/internal/stats",
+              "headers": {
+                "x-api-key": "REPLACE_WITH_YOUR_INTERNAL_API_KEY"
+              },
+              "body": { "type": "none" }
+            },
+            "propertySettings": {}
+          },
+          "lastUpdatedDate": "2024-01-01T00:00:00.000Z",
+          "nextAction": {
+            "name": "get_orders",
+            "displayName": "Get Recent Orders",
+            "type": "PIECE",
+            "valid": false,
+            "settings": {
+              "pieceName": "@activepieces/piece-http",
+              "pieceVersion": "~0.6.0",
+              "actionName": "send_request",
+              "input": {
+                "method": "GET",
+                "url": "https://meromade.zone.id/api/internal/orders?limit=10",
+                "headers": {
+                  "x-api-key": "REPLACE_WITH_YOUR_INTERNAL_API_KEY"
+                },
+                "body": { "type": "none" }
+              },
+              "propertySettings": {}
+            },
+            "lastUpdatedDate": "2024-01-01T00:00:00.000Z",
+            "nextAction": {
+              "name": "ai_answer",
+              "displayName": "AI Answer",
+              "type": "PIECE",
+              "valid": false,
+              "settings": {
+                "pieceName": "@activepieces/piece-openai",
+                "pieceVersion": "~0.4.0",
+                "actionName": "send_prompt",
+                "input": {
+                  "model": "gpt-4o-mini",
+                  "prompt": "You are an admin assistant for Meromade, an Egyptian handmade products store.\n\nAnswer this question using the data below.\n\nQuestion: {{trigger.body.question}}\n\nToday Stats: {{get_stats.body}}\n\nRecent Orders: {{get_orders.body}}\n\nReply in the same language as the question. Be concise."
+                },
+                "propertySettings": {}
+              },
+              "lastUpdatedDate": "2024-01-01T00:00:00.000Z",
+              "nextAction": {
+                "name": "reply_telegram",
+                "displayName": "Reply on Telegram",
+                "type": "PIECE",
+                "valid": false,
+                "settings": {
+                  "pieceName": "@activepieces/piece-telegram-bot",
+                  "pieceVersion": "~0.6.0",
+                  "actionName": "send_text_message",
+                  "input": {
+                    "chat_id": "{{trigger.body.chatId}}",
+                    "text": "{{ai_answer.response}}"
+                  },
+                  "propertySettings": {}
+                },
+                "lastUpdatedDate": "2024-01-01T00:00:00.000Z"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
