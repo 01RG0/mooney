@@ -52,23 +52,23 @@ service cloud.firestore {
     }
 
     // ─── analytics/productViews ───────────────────────────────────────────────
-    // Anyone can increment views (anonymous included); only admins can read
+    // Requires auth (anonymous or signed-in); client calls signInAnonymously()
     match /analytics/productViews/{document=**} {
       allow read:  if isAdmin();
-      allow write: if true;
+      allow write: if isSignedIn();
     }
 
     // ─── analytics/searchTerms ────────────────────────────────────────────────
     match /analytics/searchTerms/{document=**} {
       allow read:  if isAdmin();
-      allow write: if true;
+      allow write: if isSignedIn();
     }
 
     // ─── analytics/pageViews ─────────────────────────────────────────────────
     // Covers daily/{date} and counters/total subcollections
     match /analytics/pageViews/{document=**} {
       allow read:  if isAdmin();
-      allow write: if true;
+      allow write: if isSignedIn();
     }
 
     // ─── analytics/cartEvents ─────────────────────────────────────────────────

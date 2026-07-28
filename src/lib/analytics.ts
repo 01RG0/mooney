@@ -8,15 +8,23 @@ import {
   collection,
   addDoc,
 } from "firebase/firestore";
+import { signInAnonymously } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
 function uid(): string | undefined {
   return auth.currentUser?.uid;
 }
 
+async function ensureAuth(): Promise<void> {
+  if (!auth.currentUser) {
+    await signInAnonymously(auth);
+  }
+}
+
 // ─── Product view tracking ─────────────────────────────────────────────────
 export async function trackProductView(productId: string, productSlug: string) {
   try {
+    await ensureAuth();
     const db = getFirestore();
     // Aggregate counter (one doc per product)
     await setDoc(
@@ -43,6 +51,7 @@ export async function trackProductView(productId: string, productSlug: string) {
 export async function trackSearch(term: string) {
   if (!term.trim()) return;
   try {
+    await ensureAuth();
     const db = getFirestore();
     const normalized = term.trim().toLowerCase();
     const userId = uid();
@@ -74,6 +83,7 @@ export async function trackSearch(term: string) {
 export async function trackPageView(path: string) {
   if (!path || path.startsWith("/admin")) return; // don't track admin views
   try {
+    await ensureAuth();
     const db = getFirestore();
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 

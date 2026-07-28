@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 
 function verifyHmac(params: URLSearchParams): boolean {
   const secret = process.env.PAYMOB_HMAC_SECRET
-  if (!secret) return true // skip if not configured
+  if (!secret) return false // fail closed — secret must be configured
 
   // Paymob concatenates specific fields in alphabetical order for HMAC
   const fields = [
@@ -59,7 +59,15 @@ export async function POST(request: NextRequest) {
     const hmac = request.nextUrl.searchParams.get('hmac')
     const secret = process.env.PAYMOB_HMAC_SECRET
 
-    if (secret && hmac) {
+    if (!secret) {
+      return NextResponse.json({ error: 'webhook_not_configured' }, { status: 500 })
+    }
+
+    if (!hmac) {
+      return NextResponse.json({ error: 'missing_hmac' }, { status: 400 })
+    }
+
+    {
       const obj = (body.obj ?? {}) as Record<string, unknown>
       const src = (obj.source_data ?? {}) as Record<string, unknown>
       const fields = [
