@@ -85,16 +85,20 @@ export function ProductDetailClient({ product }: { product: Product }) {
     ? galleryImages[activeIndex] ?? galleryImages[0] ?? product.image
     : product.image
 
+  const descriptionText =
+    product.description?.trim() || "No description available.";
+
   return (
-    <div className="flex justify-center">
-      {/* Frame — mobile: stacked pink frame · desktop: two-column split */}
-      <div
-        className="font-sf relative flex w-full max-w-[400px] flex-col overflow-hidden rounded-[40px] shadow-[0_40px_80px_-24px_rgba(180,110,110,0.45)] ring-1 ring-white/40 lg:grid lg:max-w-5xl lg:grid-cols-2 lg:items-stretch"
-        style={{
-          background: "linear-gradient(to bottom, #F8D2D1, #F5C4C3)",
-          animation: "fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both",
-        }}
-      >
+    <div className="flex w-full flex-col items-center">
+      <div className="w-full max-w-[400px] lg:max-w-5xl">
+        {/* Frame — mobile: stacked pink frame · desktop: two-column split */}
+        <div
+          className="font-sf relative flex w-full flex-col overflow-hidden rounded-[40px] shadow-[0_40px_80px_-24px_rgba(180,110,110,0.45)] ring-1 ring-white/40 lg:grid lg:grid-cols-2 lg:items-stretch"
+          style={{
+            background: "linear-gradient(to bottom, #F8D2D1, #F5C4C3)",
+            animation: "fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) both",
+          }}
+        >
         {/* ── Pink stage: product floats directly on the background ── */}
         <div className="relative px-6 pt-6 lg:flex lg:flex-col lg:justify-center lg:px-10 lg:pt-0">
           {/* soft studio glow */}
@@ -233,10 +237,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
             <ViewerCounter product={product} />
           </div>
 
-          <p className="mt-3 text-[15px] leading-[1.5] text-[#9A9A9A] lg:mt-5 lg:max-w-md lg:text-base">
-            {product.description}
-          </p>
-
           {/* Feature list — desktop only, fills the column nicely */}
           {product.details.length > 0 && (
             <ul className="mt-7 hidden space-y-3 lg:block">
@@ -286,6 +286,32 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </motion.button>
           </div>
         </div>
+      </div>
+
+        {/* Description — separate frosted card below the product frame */}
+        <section
+          aria-labelledby="product-description-heading"
+          className="mt-6 w-full overflow-hidden rounded-[40px] px-7 py-8 shadow-[0_40px_80px_-24px_rgba(180,110,110,0.35)] ring-1 ring-white/40 sm:px-9 lg:px-14 lg:py-10"
+          style={{
+            background:
+              "linear-gradient(145deg, rgba(255,248,247,0.92) 0%, rgba(248,210,209,0.55) 100%)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            animation: rm
+              ? undefined
+              : "fadeSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.18s both",
+          }}
+        >
+          <h2
+            id="product-description-heading"
+            className="font-display text-xl font-semibold text-brown-900 sm:text-2xl"
+          >
+            Description
+          </h2>
+          <p className="mt-3 max-w-2xl font-sans text-[15px] leading-relaxed text-brown-700 lg:text-base">
+            {descriptionText}
+          </p>
+        </section>
       </div>
     </div>
   );

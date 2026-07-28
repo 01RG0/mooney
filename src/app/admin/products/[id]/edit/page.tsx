@@ -401,7 +401,17 @@ export default function EditProductPage() {
             </div>
           )}
         </div>
-        <div><label className={labelCls}>Description</label><textarea name='description' value={form.description} onChange={handleChange} rows={3} className={inputCls} /></div>
+        <div>
+          <label className={labelCls}>Description</label>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            rows={5}
+            placeholder="Product description shown on the product page…"
+            className={inputCls}
+          />
+        </div>
         <div><label className={labelCls}>Details (one per line)</label><textarea name='details' value={form.details} onChange={handleChange} rows={4} className={inputCls} /></div>
         <div><label className={labelCls}>Maker</label><input name='maker' value={form.maker} onChange={handleChange} className={inputCls} /></div>
         <div><label className={labelCls}>Stock</label><input name='stock' type='number' value={form.stock} onChange={handleChange} className={inputCls} /></div>

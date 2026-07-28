@@ -411,7 +411,8 @@ export default function NewProductPage() {
             name="description"
             value={form.description}
             onChange={handleChange}
-            rows={3}
+            rows={5}
+            placeholder="Product description shown on the product page…"
             className={inputCls}
           />
         </div>
