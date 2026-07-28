@@ -30,7 +30,7 @@ const pendingState = new Map<string, ConversationState>()
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function verifySecret(request: NextRequest): boolean {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET
-  if (!secret) return false
+  if (!secret) return process.env.NODE_ENV === 'development'
   return request.headers.get('x-telegram-bot-api-secret-token') === secret
 }
 

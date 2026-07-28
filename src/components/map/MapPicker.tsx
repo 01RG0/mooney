@@ -7,6 +7,7 @@ interface PickResult {
   governorate: string
   postalCode?: string
   countryCode?: string
+  country?: string
   lat: number
   lng: number
 }
@@ -186,18 +187,25 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
       .then((r) => r.json())
       .then((data) => {
         const f = data.features?.[0]?.properties ?? {}
+        // Geoapify Egyptian addresses: city may be in district, suburb, quarter, or county
+        const city = f.city ?? f.district ?? f.suburb ?? f.quarter ?? f.county ?? ''
+        const governorate = f.state ?? f.county ?? ''
+        // Build a clean street address from components if formatted is too long
+        const streetParts = [f.housenumber, f.street, f.neighbourhood].filter(Boolean)
+        const streetAddress = streetParts.length > 0 ? streetParts.join(' ') : (f.formatted ?? address)
         onConfirm({
-          address: f.formatted ?? address,
-          city: f.city ?? f.county ?? '',
-          governorate: f.state ?? '',
-          postalCode: f.postcode,
+          address: streetAddress,
+          city,
+          governorate,
+          postalCode: f.postcode ?? '',
           countryCode: f.country_code ?? '',
+          country: f.country ?? '',
           lat: pinLat,
           lng: pinLng,
         })
       })
       .catch(() => {
-        onConfirm({ address, city: '', governorate: '', countryCode: '', lat: pinLat, lng: pinLng })
+        onConfirm({ address, city: '', governorate: '', countryCode: '', country: '', lat: pinLat, lng: pinLng })
       })
       .finally(() => setLoading(false))
   }

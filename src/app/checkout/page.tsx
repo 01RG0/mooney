@@ -159,6 +159,7 @@ export default function CheckoutPage() {
     governorate: string;
     postalCode?: string;
     countryCode?: string;
+    country?: string;
     lat: number;
     lng: number;
   }) {
@@ -170,6 +171,7 @@ export default function CheckoutPage() {
       city: result.city || prev.city,
       governorate: result.governorate || prev.governorate,
       postalCode: result.postalCode || prev.postalCode,
+      country: result.country || prev.country,
     }));
     setDeliveryResult(
       calculateDeliveryFee(result.lat, result.lng, result.governorate ?? '', result.countryCode)
