@@ -6,6 +6,7 @@ interface PickResult {
   city: string
   governorate: string
   postalCode?: string
+  countryCode?: string
   lat: number
   lng: number
 }
@@ -21,6 +22,9 @@ interface MapPickerProps {
 const DEFAULT_LAT = 26.8
 const DEFAULT_LNG = 30.8
 const DEFAULT_ZOOM = 6
+
+// Inline SVG for the map pin — fully self-contained, no external image dependency
+const PIN_SVG = '<svg viewBox="0 0 24 36" width="24" height="36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0zm0 18a6 6 0 110-12 6 6 0 010 12z" fill="#944a19"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>'
 
 export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPickerProps) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -48,11 +52,17 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
     }
 
     import('leaflet').then((L) => {
-      // Fix default marker icon paths (broken in bundlers)
-      const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png'
-      const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png'
-      const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png'
-      L.Icon.Default.mergeOptions({ iconUrl, iconRetinaUrl, shadowUrl })
+      // SVG pin icon — fully inline, no external image dependencies
+      const makePin = (lat: number, lng: number) =>
+        L.marker([lat, lng], {
+          icon: L.divIcon({
+            html: '<svg viewBox="0 0 24 36" width="24" height="36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0zm0 18a6 6 0 110-12 6 6 0 010 12z" fill="#944a19"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>',
+            className: '',
+            iconSize: [24, 36],
+            iconAnchor: [12, 36],
+          }),
+          draggable: true,
+        })
 
       const startLat = initialLat ?? DEFAULT_LAT
       const startLng = initialLng ?? DEFAULT_LNG
@@ -67,7 +77,7 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
       }).addTo(map)
 
       if (initialLat && initialLng) {
-        marker.current = L.marker([initialLat, initialLng], { draggable: true }).addTo(map)
+        marker.current = makePin(initialLat, initialLng).addTo(map)
         marker.current.on('dragend', () => {
           const pos = marker.current!.getLatLng()
           void reverseGeocode(pos.lat, pos.lng)
@@ -80,7 +90,7 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
         if (marker.current) {
           marker.current.setLatLng([lat, lng])
         } else {
-          marker.current = L.marker([lat, lng], { draggable: true }).addTo(map)
+          marker.current = makePin(lat, lng).addTo(map)
           marker.current.on('dragend', () => {
             const pos = marker.current!.getLatLng()
             void reverseGeocode(pos.lat, pos.lng)
@@ -149,7 +159,15 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
       if (marker.current) {
         marker.current.setLatLng([lat, lng])
       } else {
-        marker.current = L.marker([lat, lng], { draggable: true }).addTo(leafletMap.current!)
+        marker.current = L.marker([lat, lng], {
+          icon: L.divIcon({
+            html: '<svg viewBox="0 0 24 36" width="24" height="36" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24C24 5.4 18.6 0 12 0zm0 18a6 6 0 110-12 6 6 0 010 12z" fill="#944a19"/><circle cx="12" cy="12" r="4" fill="#fff"/></svg>',
+            className: '',
+            iconSize: [24, 36],
+            iconAnchor: [12, 36],
+          }),
+          draggable: true,
+        }).addTo(leafletMap.current!)
         marker.current.on('dragend', () => {
           const pos = marker.current!.getLatLng()
           void reverseGeocode(pos.lat, pos.lng)
@@ -173,12 +191,13 @@ export function MapPicker({ onConfirm, onClose, initialLat, initialLng }: MapPic
           city: f.city ?? f.county ?? '',
           governorate: f.state ?? '',
           postalCode: f.postcode,
+          countryCode: f.country_code ?? '',
           lat: pinLat,
           lng: pinLng,
         })
       })
       .catch(() => {
-        onConfirm({ address, city: '', governorate: '', lat: pinLat, lng: pinLng })
+        onConfirm({ address, city: '', governorate: '', countryCode: '', lat: pinLat, lng: pinLng })
       })
       .finally(() => setLoading(false))
   }

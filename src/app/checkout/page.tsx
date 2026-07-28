@@ -10,7 +10,7 @@ import { Container } from "@/components/ui/Container";
 import { ButtonLink } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import { type OrderConfirmation } from "@/lib/repository/orders";
-import { ArrowLeftIcon, CheckIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, CheckIcon, MapPinIcon } from "@/components/ui/icons";
 import { trackCartEvent } from "@/lib/analytics";
 import {
   calculateDeliveryFee,
@@ -75,6 +75,16 @@ export default function CheckoutPage() {
   const [mapOpen, setMapOpen] = useState(false);
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [deliveryResult, setDeliveryResult] = useState<DeliveryFeeResult>(getDeliveryFeeEstimate());
+  const [showTransferPopup, setShowTransferPopup] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function copyBusinessNumber() {
+    if (!businessNumber) return;
+    navigator.clipboard.writeText(businessNumber).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  }
 
   const deliveryFee = deliveryResult.fee;
   const total = subtotal + deliveryFee;
@@ -130,6 +140,7 @@ export default function CheckoutPage() {
       const result = await res.json();
       clear();
       setConfirmation(result);
+      setShowTransferPopup(true);
     } catch {
       setOrderError("Something went wrong placing your order. Please try again.");
     } finally {
@@ -147,6 +158,7 @@ export default function CheckoutPage() {
     city: string;
     governorate: string;
     postalCode?: string;
+    countryCode?: string;
     lat: number;
     lng: number;
   }) {
@@ -159,45 +171,120 @@ export default function CheckoutPage() {
       governorate: result.governorate || prev.governorate,
       postalCode: result.postalCode || prev.postalCode,
     }));
-    if (result.governorate) {
-      setDeliveryResult(calculateDeliveryFee(result.lat, result.lng, result.governorate));
-    }
+    setDeliveryResult(
+      calculateDeliveryFee(result.lat, result.lng, result.governorate ?? '', result.countryCode)
+    );
   }
 
   // Confirmation screen
   if (confirmation) {
     return (
-      <Container className="py-20">
-        <div className="mx-auto flex max-w-lg flex-col items-center gap-4 text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-400 text-white">
-            <CheckIcon className="h-8 w-8" />
-          </span>
-          <h1 className="font-display text-3xl font-semibold text-brown-900">
-            Thank you — your order is placed
-          </h1>
-          <p className="text-brown-700">
-            Order{" "}
-            <span className="font-semibold text-brown-900">
-              {confirmation.orderId}
-            </span>{" "}
-            is confirmed. We&apos;ve sent a receipt to {confirmation.email}.
-          </p>
-          <div className="mt-2 rounded-2xl bg-cream/80 px-6 py-4 text-sm text-brown-700">
-            <p>
-              Total paid:{" "}
+      <>
+        <Container className="py-20">
+          <div className="mx-auto flex max-w-lg flex-col items-center gap-4 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-400 text-white">
+              <CheckIcon className="h-8 w-8" />
+            </span>
+            <h1 className="font-display text-3xl font-semibold text-brown-900">
+              Thank you — your order is placed
+            </h1>
+            <p className="text-brown-700">
+              Order{" "}
               <span className="font-semibold text-brown-900">
-                {formatPrice(confirmation.total)}
-              </span>
+                {confirmation.orderId}
+              </span>{" "}
+              is confirmed. We&apos;ve sent a receipt to {confirmation.email}.
             </p>
-            <p className="mt-1">
-              Estimated delivery: {confirmation.estimatedDelivery}
-            </p>
+            <div className="mt-2 rounded-2xl bg-cream/80 px-6 py-4 text-sm text-brown-700">
+              <p>
+                Total paid:{" "}
+                <span className="font-semibold text-brown-900">
+                  {formatPrice(confirmation.total)}
+                </span>
+              </p>
+              <p className="mt-1">
+                Estimated delivery: {confirmation.estimatedDelivery}
+              </p>
+            </div>
+            <ButtonLink href="/shop" size="lg" className="mt-3">
+              Continue shopping
+            </ButtonLink>
           </div>
-          <ButtonLink href="/shop" size="lg" className="mt-3">
-            Continue shopping
-          </ButtonLink>
-        </div>
-      </Container>
+        </Container>
+
+        {/* Transfer info popup — shown after Orange Cash orders */}
+        {showTransferPopup && businessNumber && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-brown-900/50 backdrop-blur-sm"
+              onClick={() => setShowTransferPopup(false)}
+            />
+            <div className="relative z-10 w-full max-w-sm rounded-3xl bg-blush-50 p-6 shadow-2xl text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-orange-500 text-white text-lg font-bold">
+                E£
+              </div>
+              <h3 className="font-display text-lg text-brown-900 mb-1">
+                Send your payment
+              </h3>
+              <p className="text-xs text-brown-700 mb-4">
+                Transfer via Orange Cash to complete your order
+              </p>
+
+              <div className="rounded-2xl bg-white/80 p-4 mb-4">
+                <p className="text-xs text-brown-700 mb-1">Orange Cash Number</p>
+                <p className="text-2xl font-bold text-brown-900 tracking-wider select-all mb-3">
+                  {businessNumber}
+                </p>
+                <button
+                  type="button"
+                  onClick={copyBusinessNumber}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-brown-900/15 bg-white/60 px-3.5 py-1.5 text-xs font-medium text-brown-900 transition-colors hover:border-rose-400/60 hover:text-rose-500 active:scale-95"
+                >
+                  {copied ? (
+                    <>
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="m5 13 4 4L19 7"/></svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copy number
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex justify-between text-sm text-brown-700 mb-3 px-2">
+                <span>Amount to send</span>
+                <span className="font-semibold text-brown-900">
+                  {formatPrice(confirmation.total)}
+                </span>
+              </div>
+
+              {paymentPhone && (
+                <div className="flex justify-between text-sm text-brown-700 mb-3 px-2">
+                  <span>Paying from</span>
+                  <span className="font-semibold text-brown-900">
+                    {paymentPhone}
+                  </span>
+                </div>
+              )}
+
+              <p className="text-xs text-brown-700/70 mb-5">
+                Your order will be confirmed once we verify the transfer.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setShowTransferPopup(false)}
+                className="w-full rounded-full bg-rose-400 px-6 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                I understand
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -275,31 +362,9 @@ export default function CheckoutPage() {
       >
         {/* Shipping form */}
         <div>
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-xl font-semibold text-brown-900">
-              Shipping details
-            </h2>
-            <button
-              type="button"
-              onClick={() => setMapOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-brown-900/15 bg-white/60 px-3 py-1.5 text-xs font-medium text-brown-900 transition-colors hover:border-rose-400/60 hover:text-rose-500"
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                <circle cx="12" cy="10" r="3" />
-              </svg>
-              {locationCoords ? "Change location" : "Find on map"}
-            </button>
-          </div>
+          <h2 className="font-display text-xl font-semibold text-brown-900">
+            Shipping details
+          </h2>
 
           {locationCoords && (
             <div className="mt-3 flex items-center gap-2 rounded-2xl border border-rose-400/30 bg-rose-400/5 px-4 py-2.5 text-xs text-brown-700">
@@ -333,14 +398,34 @@ export default function CheckoutPage() {
               onChange={update}
               autoComplete="email"
             />
-            <Field
-              className="sm:col-span-2"
-              name="address"
-              value={fields.address}
-              error={errors.address}
-              onChange={update}
-              autoComplete="street-address"
-            />
+            <div className="sm:col-span-2">
+              <label htmlFor="address" className="block text-sm font-medium text-brown-900">Street address</label>
+              <div className="mt-1.5 flex gap-2">
+                <input
+                  id="address"
+                  name="address"
+                  type="text"
+                  value={fields.address}
+                  autoComplete="street-address"
+                  aria-invalid={errors.address ? true : undefined}
+                  onChange={(e) => update("address", e.target.value)}
+                  className={`min-w-0 flex-1 rounded-2xl border bg-cream/60 px-4 py-3 text-sm text-brown-900 placeholder:text-brown-700/50 focus:outline-none ${
+                    errors.address
+                      ? "border-rose-500 focus:border-rose-500"
+                      : "border-brown-900/15 focus:border-brown-900/40"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMapOpen(true)}
+                  className="shrink-0 rounded-2xl border border-brown-900/15 bg-white/40 px-3 py-3 text-xs text-rose-400 hover:bg-rose-400/10 transition-colors flex items-center gap-1.5"
+                >
+                  <MapPinIcon className="h-4 w-4" />
+                  {locationCoords ? "Change" : "Find on map"}
+                </button>
+              </div>
+              {errors.address && <p className="mt-1 text-xs text-rose-500">{errors.address}</p>}
+            </div>
             <Field
               name="city"
               value={fields.city}
@@ -412,25 +497,19 @@ export default function CheckoutPage() {
               </div>
               <p className="font-medium text-sm text-brown-900">Orange Cash</p>
               <p className="text-xs text-brown-700 mt-0.5">
-                Transfer to our number
+                Pay via Orange Cash
               </p>
               {paymentMethod === "orange-cash" && (
                 <div className="mt-3 space-y-2">
-                  {businessNumber && (
-                    <p className="text-xs text-brown-900 font-medium">
-                      Transfer to:{" "}
-                      <span className="text-rose-500">{businessNumber}</span>
-                    </p>
-                  )}
                   <input
                     type="tel"
                     value={paymentPhone}
                     onChange={(e) => setPaymentPhone(e.target.value)}
-                    placeholder="Your Orange Cash number"
+                    placeholder="Phone number you'll pay with"
                     className="w-full rounded-xl border border-brown-900/15 bg-white/60 px-3 py-2 text-xs text-brown-900 focus:outline-none focus:border-rose-400/60"
                   />
                   <p className="text-xs text-brown-700">
-                    Order confirmed after we verify transfer.
+                    We'll show you where to send payment after you place the order.
                   </p>
                 </div>
               )}
@@ -516,7 +595,12 @@ export default function CheckoutPage() {
                 {deliveryFee} EGP
               </dd>
             </div>
-            {!deliveryResult.confirmed && (
+            {deliveryResult.blocked && (
+              <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
+                {deliveryResult.note ?? "Delivery is only available within Egypt"}
+              </div>
+            )}
+            {!deliveryResult.confirmed && !deliveryResult.blocked && (
               <div className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700">
                 {deliveryResult.note ?? "Confirm your location on the map for an exact delivery fee"}
               </div>
@@ -539,10 +623,14 @@ export default function CheckoutPage() {
           )}
           <button
             type="submit"
-            disabled={status === "submitting"}
+            disabled={status === "submitting" || !!deliveryResult.blocked}
             className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-rose-400 px-7 py-3.5 text-base font-medium text-white transition-colors hover:bg-rose-500 disabled:opacity-60"
           >
-            {status === "submitting" ? "Placing order…" : `Place Order · ${formatPrice(subtotal)} + ${deliveryFee} EGP`}
+            {status === "submitting"
+              ? "Placing order…"
+              : deliveryResult.blocked
+              ? "Delivery not available in your location"
+              : `Place Order · ${formatPrice(subtotal)} + ${deliveryFee} EGP`}
           </button>
         </aside>
       </form>

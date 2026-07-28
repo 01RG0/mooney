@@ -46,7 +46,16 @@ export async function Footer() {
 
         <div className="mt-12 flex flex-col gap-2 border-t border-blush-100/15 pt-6 text-sm text-blush-100/60 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Meromade. Made by hand.</p>
-          <p>The Art of Handmade in Every Piece.</p>
+          <div className="flex items-center gap-3">
+            <a
+              href="mailto:meromade@proton.me"
+              className="transition-colors hover:text-blush-100"
+            >
+              meromade@proton.me
+            </a>
+            <span aria-hidden className="text-blush-100/30">·</span>
+            <p>The Art of Handmade in Every Piece.</p>
+          </div>
         </div>
       </Container>
     </footer>

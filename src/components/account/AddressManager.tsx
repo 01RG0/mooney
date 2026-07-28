@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import type { AddressProfile } from '@/lib/types'
 import { MapPicker } from '@/components/map/MapPicker'
+import { MapPinIcon } from '@/components/ui/icons'
 
 const GOVERNORATES = ['Cairo','Giza','Alexandria','Dakahlia','Red Sea','Beheira','Fayoum','Gharbiya','Ismailia','Menofia','Minya','Qaliubiya','New Valley','Suez','Aswan','Assiut','Beni Suef','Port Said','Damietta','Sharkia','South Sinai','Kafr El-Sheikh','Matrouh','Luxor','Qena','North Sinai','Sohag']
 
@@ -75,18 +76,7 @@ export function AddressManager() {
               <input value={(form as Record<string, unknown>)[key] as string} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} className={inputCls} required />
             </div>
           ))}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowMap(true)}
-              className="text-sm text-rose-400 hover:underline mb-2 flex items-center gap-1"
-            >
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              Find on map
-            </button>
-          </div>
           {[
-            { key: 'address', label: 'Street Address' },
             { key: 'city', label: 'City' },
             { key: 'postalCode', label: 'Postal Code (optional)' },
           ].map(({ key, label }) => (
@@ -95,6 +85,25 @@ export function AddressManager() {
               <input value={(form as Record<string, unknown>)[key] as string} onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))} className={inputCls} required={key !== 'postalCode'} />
             </div>
           ))}
+          <div>
+            <label className={labelCls}>Street Address</label>
+            <div className="flex gap-2">
+              <input
+                value={form.address}
+                onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
+                className={`${inputCls} min-w-0 flex-1`}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="shrink-0 rounded-2xl border border-brown-900/15 bg-white/40 px-3 py-3 text-xs text-rose-400 hover:bg-rose-400/10 transition-colors flex items-center gap-1.5"
+              >
+                <MapPinIcon className="h-4 w-4" />
+                Find on map
+              </button>
+            </div>
+          </div>
           <div>
             <label className={labelCls}>Governorate</label>
             <select value={form.governorate} onChange={(e) => setForm((f) => ({ ...f, governorate: e.target.value }))} className={inputCls} required>

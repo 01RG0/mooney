@@ -1,62 +1,60 @@
 // ─── Reference Point ─────────────────────────────────────────────────────────
-// Sidi Bishr El Tram, Alexandria — geocoded via Geoapify once and hardcoded
-export const REFERENCE_POINT = { lat: 31.2699, lng: 30.0008 }
+// Mohammed Nageeb station, Alexandria — closest delivery origin (30 EGP base fee)
+export const REFERENCE_POINT = { lat: 31.2006, lng: 29.9054 }
 
 // ─── Alexandria fee config ────────────────────────────────────────────────────
 export const MIN_FEE = 30
-export const MAX_FEE = 80
-// Approx straight-line distance from Sidi Bishr El Tram to Mansheya (western end)
-export const MAX_ALEX_DISTANCE_KM = 12
+export const MAX_FEE = 100
+// Approx straight-line distance from Mohammed Nageeb to farthest Alexandria point (Montaza/Abou Qir direction)
+export const MAX_ALEX_DISTANCE_KM = 20
 
 // ─── Fallback fee when location can't be confirmed ───────────────────────────
 export const DEFAULT_DELIVERY_FEE = 50
 
 // ─── Governorate fee table ────────────────────────────────────────────────────
 // Keys match Geoapify's `state` field for Egyptian addresses.
-// TODO: verify exact values with operations team — placeholder tiers used.
 export const GOVERNORATE_FEES: Record<string, number> = {
   // Delta / near Alexandria — low end
-  Beheira: 100,
-  'Kafr el-Sheikh': 120,
-  Gharbia: 120,
-  Monufia: 130,
+  Beheira: 150,
+  'Kafr el-Sheikh': 170,
+  Gharbia: 170,
+  Monufia: 180,
   // Greater Cairo area
-  Qalyubia: 150,
-  Cairo: 150,
-  Giza: 150,
+  Qalyubia: 200,
+  Cairo: 200,
+  Giza: 200,
   // Eastern Delta
-  Sharqia: 150,
-  Dakahlia: 150,
-  Damietta: 160,
-  'Port Said': 160,
+  Sharqia: 200,
+  Dakahlia: 200,
+  Damietta: 210,
+  'Port Said': 210,
   // Canal zone
-  Ismailia: 170,
-  Suez: 180,
-  // North Sinai
-  'North Sinai': 200,
-  // TODO: confirm North Sinai — remote areas may warrant higher fee
+  Ismailia: 220,
+  Suez: 230,
   // Mediterranean coast
-  Matruh: 200,
+  Matruh: 250,
+  // North Sinai
+  'North Sinai': 250,
   // Upper Egypt — mid range
-  Fayoum: 180,
-  'Beni Suef': 190,
-  Minya: 210,
-  Asyut: 230,
-  Sohag: 250,
-  Qena: 260,
-  Luxor: 270,
+  Fayoum: 230,
+  'Beni Suef': 240,
+  Minya: 260,
+  Asyut: 270,
+  Sohag: 280,
+  Qena: 290,
+  Luxor: 300,
   // Deep south / remote — high end
-  Aswan: 280,
-  'Red Sea': 280,
-  'South Sinai': 300,
-  'New Valley': 300,
-  // TODO: add remaining governorates (Isna, Edfu, etc.) as needed
+  Aswan: 320,
+  'Red Sea': 320,
+  'South Sinai': 340,
+  'New Valley': 350,
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type DeliveryFeeResult = {
   fee: number
   confirmed: boolean
+  blocked?: boolean
   note?: string
 }
 
@@ -78,7 +76,13 @@ export function calculateDeliveryFee(
   lat: number,
   lng: number,
   governorate: string,
+  countryCode?: string,
 ): DeliveryFeeResult {
+  // Block orders from outside Egypt
+  if (countryCode && countryCode.toLowerCase() !== 'eg') {
+    return { fee: 0, confirmed: true, blocked: true, note: 'Delivery is only available within Egypt' }
+  }
+
   const gov = governorate.trim()
   const govLower = gov.toLowerCase()
   const isAlexandria =
@@ -102,11 +106,11 @@ export function calculateDeliveryFee(
     return { fee: tableFee, confirmed: true }
   }
 
-  // Distance-based fallback for unlisted governorates
+  // Distance-based fallback for unlisted Egyptian governorates (150–350 EGP range)
   const MAX_OUTSIDE_DISTANCE_KM = 900
-  const raw = 100 + 200 * Math.min(distanceKm / MAX_OUTSIDE_DISTANCE_KM, 1)
+  const raw = 150 + 200 * Math.min(distanceKm / MAX_OUTSIDE_DISTANCE_KM, 1)
   const rounded = Math.round(raw / 10) * 10
-  const fee = Math.min(Math.max(rounded, 100), 300)
+  const fee = Math.min(Math.max(rounded, 150), 350)
   return { fee, confirmed: true, note: 'Distance-based estimate' }
 }
 
