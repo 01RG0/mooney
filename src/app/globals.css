@@ -212,3 +212,16 @@
     transform: scale(1);
   }
 }
+
+/* Soft live pulse for the product viewer indicator. */
+@keyframes viewerPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(2.1);
+    opacity: 0;
+  }
+}
