@@ -81,6 +81,11 @@ export default function CheckoutPage() {
   const [deliveryResult, setDeliveryResult] = useState<DeliveryFeeResult>(getDeliveryFeeEstimate());
   const [showTransferPopup, setShowTransferPopup] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponState, setCouponState] = useState<{
+    valid: boolean; discountAmount: number; freeShipping: boolean; message: string; code: string;
+  } | null>(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   function copyBusinessNumber() {
     if (!businessNumber) return;
@@ -90,8 +95,37 @@ export default function CheckoutPage() {
     }).catch(() => {});
   }
 
-  const deliveryFee = deliveryResult.fee;
-  const total = subtotal + deliveryFee;
+  const effectiveDeliveryFee = couponState?.freeShipping ? 0 : deliveryResult.fee;
+  const deliveryFee = effectiveDeliveryFee;
+  const discountAmount = couponState?.discountAmount ?? 0;
+  const total = subtotal + deliveryFee - discountAmount;
+
+  async function applyCoupon() {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponState(null);
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: couponCode.trim(),
+          subtotal,
+          productIds: items.map((i) => i.productId),
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        setCouponState({ valid: false, discountAmount: 0, freeShipping: false, message: d.message ?? "Invalid coupon", code: couponCode });
+      } else {
+        setCouponState({ valid: true, discountAmount: d.discountAmount, freeShipping: d.freeShipping, message: d.description || "Coupon applied!", code: d.code });
+      }
+    } catch {
+      setCouponState({ valid: false, discountAmount: 0, freeShipping: false, message: "Could not validate coupon", code: couponCode });
+    } finally {
+      setCouponLoading(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/checkout/orange-cash-number")
@@ -142,6 +176,7 @@ export default function CheckoutPage() {
           total,
           paymentMethod: "orange-cash",
           paymentPhone,
+          ...(couponState?.valid && { couponCode: couponState.code }),
         }),
       });
       if (!res.ok) throw new Error("Order submission failed");
@@ -596,6 +631,33 @@ export default function CheckoutPage() {
             ))}
           </ul>
 
+          {/* Coupon input */}
+          <div className="mt-4 flex gap-2">
+            <input
+              type="text"
+              value={couponCode}
+              onChange={(e) => { setCouponCode(e.target.value.toUpperCase()); setCouponState(null); }}
+              placeholder="Coupon code"
+              className="min-w-0 flex-1 rounded-2xl border border-brown-900/15 bg-cream/60 px-4 py-2.5 text-sm text-brown-900 placeholder:text-brown-700/50 focus:outline-none focus:border-rose-400/60"
+            />
+            <button
+              type="button"
+              onClick={applyCoupon}
+              disabled={couponLoading || !couponCode.trim()}
+              className="shrink-0 rounded-2xl bg-brown-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-brown-800 disabled:opacity-50 transition-colors"
+            >
+              {couponLoading ? "…" : "Apply"}
+            </button>
+          </div>
+          {couponState && (
+            <div className={`mt-2 rounded-xl px-3 py-2 text-xs flex items-center justify-between ${couponState.valid ? "bg-green-50 text-green-700" : "bg-rose-50 text-rose-600"}`}>
+              <span>{couponState.valid ? "✓ " : "✗ "}{couponState.message}</span>
+              {couponState.valid && (
+                <button type="button" onClick={() => { setCouponState(null); setCouponCode(""); }} className="ml-2 text-green-600 hover:text-green-800">✕</button>
+              )}
+            </div>
+          )}
+
           <dl className="mt-5 space-y-2 border-t border-brown-900/10 pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-brown-700">Subtotal</dt>
@@ -611,9 +673,15 @@ export default function CheckoutPage() {
                 )}
               </dt>
               <dd className="font-medium text-brown-900">
-                {deliveryFee} EGP
+                {couponState?.freeShipping ? <span className="text-green-600">Free</span> : `${deliveryFee} EGP`}
               </dd>
             </div>
+            {discountAmount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <dt>Discount ({couponState?.code})</dt>
+                <dd className="font-medium">− {formatPrice(discountAmount)}</dd>
+              </div>
+            )}
             {deliveryResult.blocked && (
               <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">
                 {deliveryResult.note ?? "Delivery is only available within Egypt"}
@@ -629,10 +697,7 @@ export default function CheckoutPage() {
                 Total
               </dt>
               <dd className="font-display text-base font-semibold text-brown-900">
-                {formatPrice(subtotal)}{" "}
-                <span className="text-sm font-normal text-brown-700">
-                  + {deliveryFee} EGP delivery
-                </span>
+                {formatPrice(total)}
               </dd>
             </div>
           </dl>
@@ -649,7 +714,7 @@ export default function CheckoutPage() {
               ? "Placing order…"
               : deliveryResult.blocked
               ? "Delivery not available in your location"
-              : `Place Order · ${formatPrice(subtotal)} + ${deliveryFee} EGP`}
+              : `Place Order · ${formatPrice(total)}`}
           </button>
         </aside>
       </form>

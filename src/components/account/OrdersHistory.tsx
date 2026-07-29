@@ -14,6 +14,8 @@ interface Order {
   status: string
   total: number
   items: OrderItem[]
+  couponCode?: string
+  discountAmount?: number
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -202,6 +204,12 @@ export function OrdersHistory() {
                   ))}
                 </tbody>
                 <tfoot>
+                  {order.couponCode && order.discountAmount ? (
+                    <tr>
+                      <td colSpan={2} className="pt-2 text-right text-xs text-green-600">Coupon ({order.couponCode})</td>
+                      <td className="pt-2 text-right text-xs text-green-600">− EGP {order.discountAmount.toFixed(2)}</td>
+                    </tr>
+                  ) : null}
                   <tr>
                     <td colSpan={2} className="pt-3 text-right text-xs font-medium text-brown-700">Total</td>
                     <td className="pt-3 text-right font-semibold text-brown-900">EGP {(order.total ?? 0).toFixed(2)}</td>

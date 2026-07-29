@@ -61,7 +61,14 @@ export function ProductCard({ product }: { product: Product }) {
 
         <div className="mt-3 flex items-center justify-between">
           <span className="font-display text-lg font-semibold text-brown-900">
-            {formatPrice(product.price)}
+            {product.salePrice != null ? (
+              <>
+                <span className="text-rose-500">{formatPrice(product.salePrice)}</span>
+                <span className="ml-1.5 text-sm font-normal text-brown-500 line-through">{formatPrice(product.price)}</span>
+              </>
+            ) : (
+              formatPrice(product.price)
+            )}
           </span>
           <motion.button
             type="button"

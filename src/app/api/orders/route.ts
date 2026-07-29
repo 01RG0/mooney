@@ -50,6 +50,7 @@ const OrderBodySchema = z.object({
   shippingDetails: ShippingDetailsSchema,
   paymentMethod: z.string().optional(),
   paymentPhone: z.string().optional(),
+  couponCode: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: 'Invalid request', details: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { items, shippingDetails, paymentMethod, paymentPhone } = parsed.data
+    const { items, shippingDetails, paymentMethod, paymentPhone, couponCode } = parsed.data
 
     // ── Server-side price verification ────────────────────────────────────────
     // Fetch all product prices from Firestore; never trust client-submitted prices
@@ -78,14 +79,15 @@ export async function POST(request: NextRequest) {
       if (!doc.exists) {
         throw Object.assign(new Error(`Product not found: ${item.productId}`), { status: 404 })
       }
-      const data = doc.data() as { price: number; stock?: number; name?: string }
+      const data = doc.data() as { price: number; salePrice?: number; stock?: number; name?: string }
       if (typeof data.stock === 'number' && data.stock < item.quantity) {
         throw Object.assign(
           new Error(`Insufficient stock for product: ${item.productId}`),
           { status: 409 }
         )
       }
-      const serverPrice = data.price
+      // Use salePrice if set, otherwise regular price
+      const serverPrice = data.salePrice != null ? data.salePrice : data.price
       if (item.price !== serverPrice) {
         console.warn('[price-mismatch]', { productId: item.productId, clientPrice: item.price, serverPrice, userId: user.uid })
       }
@@ -106,8 +108,45 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: deliveryResult.note ?? 'Delivery not available in your location' }, { status: 422 })
     }
 
-    const deliveryCost = deliveryResult.fee
-    const total = subtotal + deliveryCost
+    let deliveryCost = deliveryResult.fee
+
+    // ── Coupon validation (server-side) ───────────────────────────────────────
+    let discountAmount = 0
+    let validatedCouponCode: string | undefined
+    if (couponCode) {
+      const upperCode = couponCode.trim().toUpperCase()
+      const couponDoc = await db.collection('coupons').doc(upperCode).get()
+      if (couponDoc.exists) {
+        const coupon = couponDoc.data() as import('@/lib/types').Coupon
+        const now = new Date()
+        const isActive = coupon.active
+        const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > now
+        const notExhausted = coupon.maxUses == null || coupon.usedCount < coupon.maxUses
+        const meetsMin = coupon.minOrderValue == null || subtotal >= coupon.minOrderValue
+
+        let perCustomerOk = true
+        if (coupon.maxUsesPerCustomer != null) {
+          const usageSnap = await db.collection('couponUsage')
+            .where('couponCode', '==', upperCode)
+            .where('userId', '==', user.uid)
+            .get()
+          perCustomerOk = usageSnap.size < coupon.maxUsesPerCustomer
+        }
+
+        if (isActive && notExpired && notExhausted && meetsMin && perCustomerOk) {
+          if (coupon.discountType === 'percent') {
+            discountAmount = Math.round((subtotal * coupon.discountValue) / 100)
+          } else if (coupon.discountType === 'fixed') {
+            discountAmount = Math.min(coupon.discountValue, subtotal)
+          } else if (coupon.discountType === 'free_shipping' || coupon.freeShipping) {
+            deliveryCost = 0
+          }
+          validatedCouponCode = upperCode
+        }
+      }
+    }
+
+    const total = subtotal + deliveryCost - discountAmount
 
     // Log if client tried to submit a tampered delivery fee
     if (
@@ -135,15 +174,33 @@ export async function POST(request: NextRequest) {
       shippingDetails,
       subtotal,
       deliveryCost,
+      discountAmount,
       total,
       status: paymentMethod === 'orange-cash' ? 'pending-manual-confirmation' : 'pending',
       createdAt: now,
       updatedAt: now,
       ...(paymentMethod && { paymentMethod }),
       ...(paymentPhone  && { paymentPhone  }),
+      ...(validatedCouponCode && { couponCode: validatedCouponCode }),
     }
 
     await db.collection('orders').doc(orderId).set(order)
+
+    // ── Record coupon usage + increment counter ───────────────────────────────
+    if (validatedCouponCode) {
+      const batch = db.batch()
+      batch.set(db.collection('couponUsage').doc(), {
+        couponCode: validatedCouponCode,
+        userId: user.uid,
+        orderId,
+        discountAmount,
+        usedAt: now,
+      })
+      batch.update(db.collection('coupons').doc(validatedCouponCode), {
+        usedCount: (await db.collection('coupons').doc(validatedCouponCode).get()).data()!.usedCount + 1,
+      })
+      await batch.commit()
+    }
 
     // ── Telegram notification (non-blocking) ──────────────────────────────────
     const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID

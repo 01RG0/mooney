@@ -26,6 +26,7 @@ export interface Product {
   name: string;
   category: CategorySlug;
   price: number;
+  salePrice?: number;         // if set, shown as sale with original crossed out
   image: string;
   description: string;
   details: string[];
@@ -68,6 +69,10 @@ export interface Order {
   email: string;
   items: CartItem[];
   shippingDetails: ShippingDetails;
+  subtotal?: number;
+  deliveryCost?: number;
+  discountAmount?: number;
+  couponCode?: string;
   total: number;
   status: OrderStatus;
   createdAt: string;
@@ -176,18 +181,34 @@ export interface Notification {
 
 // ─── Coupons ──────────────────────────────────────────────────────────────
 
-export type DiscountType = "percent" | "fixed";
+export type DiscountType = "percent" | "fixed" | "free_shipping";
 
 export interface Coupon {
-  code: string;           // document ID = uppercase coupon code
+  code: string;               // document ID = uppercase coupon code
+  description?: string;       // admin-facing note
   discountType: DiscountType;
-  discountValue: number;  // percent (0–100) or fixed GBP pence
-  minOrderValue?: number; // minimum order total in pence to apply
-  maxUses?: number;
+  discountValue: number;      // percent (0–100), fixed EGP, or 0 for free_shipping
+  minOrderValue?: number;     // minimum subtotal to activate (EGP)
+  maxUses?: number;           // null/undefined = unlimited
   usedCount: number;
+  maxUsesPerCustomer?: number;// null/undefined = unlimited per customer
   active: boolean;
-  expiresAt?: string;
+  expiresAt?: string;         // ISO date string
+  appliesToProductIds?: string[];   // empty = all products
+  appliesToCategoryIds?: string[];  // empty = all categories
+  allowedEmails?: string[];   // empty = all customers
+  freeShipping?: boolean;     // explicit free shipping flag
+  stackable?: boolean;        // can be combined with other coupons (future)
   createdAt: string;
+  updatedAt?: string;
+}
+
+export interface CouponUsage {
+  couponCode: string;         // document ID
+  userId: string;
+  orderId: string;
+  discountAmount: number;
+  usedAt: string;
 }
 
 // ─── Stock Alerts ─────────────────────────────────────────────────────────

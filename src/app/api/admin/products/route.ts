@@ -15,6 +15,7 @@ const ProductBodySchema = z.object({
   slug: z.string().min(1),
   category: z.string().min(1),
   price: z.number().positive(),
+  salePrice: z.number().positive().nullable().optional(),
   image: imagePath,
   description: z.string().optional().default(''),
   details: z.array(z.string()).optional().default([]),

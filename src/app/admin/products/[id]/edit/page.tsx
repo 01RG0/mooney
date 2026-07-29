@@ -8,7 +8,7 @@ export default function EditProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([])
-  const [form, setForm] = useState({ name: '', slug: '', category: '', price: '', image: '', description: '', details: '', maker: '', isNew: false, stock: '0' })
+  const [form, setForm] = useState({ name: '', slug: '', category: '', price: '', salePrice: '', image: '', description: '', details: '', maker: '', isNew: false, stock: '0' })
   const [saving, setSaving] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -29,7 +29,7 @@ export default function EditProductPage() {
     Promise.all([
       fetch('/api/categories').then(r => r.json()).catch(() => []),
       fetch('/api/admin/products').then(r => r.json()),
-    ]).then(([cats, products]: [{ slug: string; name: string }[], { id: string; name?: string; slug?: string; category?: string; price?: number; image?: string; description?: string; details?: string[]; maker?: string; isNew?: boolean; stock?: number; images?: string[]; mainImageIndex?: number; viewerCount?: { min: number; max: number; enabled: boolean }; hasColors?: boolean; colorVariants?: { id: string; name: string; hex: string; images: string[]; stock?: number }[] }[]]) => {
+    ]).then(([cats, products]: [{ slug: string; name: string }[], { id: string; name?: string; slug?: string; category?: string; price?: number; salePrice?: number; image?: string; description?: string; details?: string[]; maker?: string; isNew?: boolean; stock?: number; images?: string[]; mainImageIndex?: number; viewerCount?: { min: number; max: number; enabled: boolean }; hasColors?: boolean; colorVariants?: { id: string; name: string; hex: string; images: string[]; stock?: number }[] }[]]) => {
       setCategories(cats)
       const p = products.find(p => p.id === id)
         if (p) {
@@ -38,6 +38,7 @@ export default function EditProductPage() {
             slug: p.slug ?? '',
             category: p.category ?? (cats.length > 0 ? cats[0].slug : ''),
             price: String(p.price ?? ''),
+            salePrice: p.salePrice != null ? String(p.salePrice) : '',
             image: p.image ?? '',
             description: p.description ?? '',
             details: Array.isArray(p.details) ? p.details.join('\n') : '',
@@ -130,6 +131,7 @@ export default function EditProductPage() {
         body: JSON.stringify({
           ...form,
           price: parseFloat(form.price),
+          salePrice: form.salePrice ? parseFloat(form.salePrice) : null,
           stock: parseInt(form.stock),
           details: form.details.split('\n').filter(Boolean),
           images,
@@ -170,7 +172,10 @@ export default function EditProductPage() {
             ))}
           </select>
         </div>
-        <div><label className={labelCls}>Price (EGP)</label><input name='price' type='number' step='0.01' value={form.price} onChange={handleChange} required className={inputCls} /></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div><label className={labelCls}>Price (EGP)</label><input name='price' type='number' step='0.01' value={form.price} onChange={handleChange} required className={inputCls} /></div>
+          <div><label className={labelCls}>Sale Price (EGP) <span className="text-gray-400 font-normal">— leave empty for no sale</span></label><input name='salePrice' type='number' step='0.01' value={form.salePrice} onChange={handleChange} className={inputCls} placeholder="e.g. 180" /></div>
+        </div>
 
         <div>
           <label className={labelCls}>Product Images</label>
