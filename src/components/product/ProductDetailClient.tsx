@@ -31,49 +31,45 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [colorIndex, setColorIndex] = useState(0);
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [added, setAdded] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
-  const [stripIndex, setStripIndex] = useState(0)
+  const [heroIndex, setHeroIndex] = useState(0)
+  const [colorSelected, setColorSelected] = useState(false)
   const [dragStart, setDragStart] = useState<number | null>(null)
 
   const useVariants = !!(product.hasColors && product.colorVariants?.length);
   const activeVariant = useVariants ? product.colorVariants![selectedVariantIndex] : undefined;
   const productImages = product.images ?? [];
 
+  // Images shown in hero: if user picked a color → that color's images, else product images
+  const heroImages = (useVariants && colorSelected && activeVariant?.images.length)
+    ? activeVariant.images
+    : productImages.length
+      ? productImages
+      : [product.image]
+
   useEffect(() => {
     void trackProductView(product.id, product.slug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
+  // Auto-advance hero when showing product images (not when a color is selected)
   useEffect(() => {
-    if (productImages.length <= 1) return
-    const id = setInterval(() => setStripIndex(i => (i + 1) % productImages.length), 3000)
+    if (colorSelected || heroImages.length <= 1) return
+    const id = setInterval(() => setHeroIndex(i => (i + 1) % heroImages.length), 3000)
     return () => clearInterval(id)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productImages.length])
-
-  // Build per-variant offset map so clicking a color jumps to its first image
-  const variantOffsets: number[] = [];
-  if (useVariants) {
-    let offset = 0;
-    for (const v of product.colorVariants!) {
-      variantOffsets.push(offset);
-      offset += v.images.length;
-    }
-  }
-
-  // Hero gallery: variant images per color, or product images if no variants
-  const galleryImages = useVariants
-    ? product.colorVariants!.flatMap(v => v.images)
-    : productImages;
+  }, [colorSelected, heroImages.length])
 
   function handleVariantChange(idx: number) {
     setSelectedVariantIndex(idx);
-    setActiveIndex(variantOffsets[idx] ?? 0);
+    setColorSelected(true);
+    setHeroIndex(0);
   }
 
   const color = useVariants
     ? (activeVariant?.name ?? "Default")
     : (product.colors[colorIndex]?.name ?? "Default");
+
+  const displayImage = heroImages[heroIndex] ?? heroImages[0] ?? product.image
 
   function handleAdd() {
     if (useVariants && activeVariant) {
@@ -103,9 +99,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
     window.setTimeout(() => setAdded(false), 1800);
   }
 
-  const displayImage = galleryImages.length
-    ? galleryImages[activeIndex] ?? galleryImages[0] ?? product.image
-    : product.image
 
   const descriptionText =
     product.description?.trim() || " ";
@@ -129,14 +122,30 @@ export function ProductDetailClient({ product }: { product: Product }) {
             className="pointer-events-none absolute left-1/2 top-6 h-56 w-56 -translate-x-1/2 rounded-full bg-white/30 blur-3xl lg:top-1/2 lg:h-80 lg:w-80 lg:-translate-y-1/2"
           />
 
-          {/* hero product — floating, no box around it */}
-          <div className="flex h-[300px] items-center justify-center px-2 sm:h-[330px] lg:h-[460px]">
-            {/* layoutId matches ProductCard to enable shared-element morph on navigation */}
+          {/* hero — swipeable */}
+          <div
+            className="flex h-[300px] items-center justify-center px-2 sm:h-[330px] lg:h-[460px] select-none"
+            onMouseDown={e => setDragStart(e.clientX)}
+            onMouseUp={e => {
+              if (dragStart === null) return
+              const dx = e.clientX - dragStart
+              if (Math.abs(dx) > 30) setHeroIndex(i => dx < 0 ? (i + 1) % heroImages.length : (i - 1 + heroImages.length) % heroImages.length)
+              setDragStart(null)
+            }}
+            onTouchStart={e => setDragStart(e.touches[0].clientX)}
+            onTouchEnd={e => {
+              if (dragStart === null) return
+              const dx = e.changedTouches[0].clientX - dragStart
+              if (Math.abs(dx) > 30) setHeroIndex(i => dx < 0 ? (i + 1) % heroImages.length : (i - 1 + heroImages.length) % heroImages.length)
+              setDragStart(null)
+            }}
+          >
             <motion.div
               layoutId={rm ? undefined : `product-image-${product.id}`}
               className="h-full w-full max-w-[280px] lg:max-w-[420px]"
             >
               <Image
+                key={displayImage}
                 src={displayImage}
                 alt={product.name}
                 width={620}
@@ -147,62 +156,26 @@ export function ProductDetailClient({ product }: { product: Product }) {
               />
             </motion.div>
           </div>
-          {/* ── Bottom row: sliding product images + color swatches ── */}
-          <div className="mt-3 mb-2 flex items-center gap-3 px-1 lg:mt-6 lg:mb-0">
 
-            {/* Draggable / auto-sliding product images strip */}
-            {productImages.length > 0 && (
-              <div
-                className="relative overflow-hidden rounded-2xl"
-                style={{ height: 56, width: 120, flexShrink: 0 }}
-                onMouseDown={e => setDragStart(e.clientX)}
-                onMouseUp={e => {
-                  if (dragStart === null) return
-                  const dx = e.clientX - dragStart
-                  if (Math.abs(dx) > 20) setStripIndex(i => dx < 0 ? (i + 1) % productImages.length : (i - 1 + productImages.length) % productImages.length)
-                  setDragStart(null)
-                }}
-                onTouchStart={e => setDragStart(e.touches[0].clientX)}
-                onTouchEnd={e => {
-                  if (dragStart === null) return
-                  const dx = e.changedTouches[0].clientX - dragStart
-                  if (Math.abs(dx) > 20) setStripIndex(i => dx < 0 ? (i + 1) % productImages.length : (i - 1 + productImages.length) % productImages.length)
-                  setDragStart(null)
-                }}
-              >
-                <div
-                  className="flex h-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
-                  style={{ transform: `translateX(-${stripIndex * 100}%)` }}
-                >
-                  {productImages.map((img, i) => (
-                    <div
-                      key={i}
-                      className="h-full shrink-0 cursor-pointer"
-                      style={{ width: 120 }}
-                      onClick={() => {
-                        setActiveIndex(useVariants ? 0 : i)
-                        setStripIndex(i)
-                      }}
-                    >
-                      <img src={img} alt="" className="h-full w-full object-cover" draggable={false} />
-                    </div>
-                  ))}
-                </div>
-                {productImages.length > 1 && (
-                  <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1 pointer-events-none">
-                    {productImages.map((_, i) => (
-                      <span key={i} className={`block rounded-full transition-all duration-300 ${i === stripIndex ? 'w-3 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+          {/* dot indicators */}
+          {heroImages.length > 1 && (
+            <div className="mt-2 flex justify-center gap-1.5">
+              {heroImages.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setHeroIndex(i)}
+                  className={`block rounded-full transition-all duration-300 ${i === heroIndex ? 'w-4 h-1.5 bg-white/90' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'}`}
+                />
+              ))}
+            </div>
+          )}
 
-            {/* Colour swatches */}
-            {useVariants ? (
-            <div className="flex flex-wrap gap-2.5">
+          {/* colour swatches */}
+          {useVariants ? (
+            <div className="mt-3 mb-2 flex justify-center gap-3.5 lg:mt-5 lg:mb-0">
               {product.colorVariants!.map((v, i) => {
-                const isActive = i === selectedVariantIndex;
+                const isActive = i === selectedVariantIndex && colorSelected;
                 const isOutOfStock = v.stock === 0;
                 return (
                   <button
@@ -237,7 +210,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               })}
             </div>
           ) : product.colors.length > 0 ? (
-            <div className="flex flex-wrap gap-2.5">
+            <div className="mt-3 mb-2 flex justify-center gap-3.5 lg:mt-5 lg:mb-0">
               {product.colors.map((c, i) => {
                 const isActive = i === colorIndex;
                 return (
@@ -273,8 +246,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
               })}
             </div>
           ) : null}
-
-          </div>{/* end bottom row */}
         </div>
 
         {/* ── Cream card — mobile: overlaps stage · desktop: right column ── */}
