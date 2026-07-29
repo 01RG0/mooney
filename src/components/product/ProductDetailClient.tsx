@@ -51,7 +51,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
     : (product.colors[colorIndex]?.name ?? "Default");
 
   const variantImages = useVariants ? (activeVariant?.images ?? []) : null;
-  const galleryImages = variantImages ?? product.images ?? [];
+  const productImages = product.images ?? [];
+  const galleryImages = variantImages !== null
+    ? [...variantImages, ...productImages]
+    : productImages;
 
   function handleAdd() {
     if (useVariants && activeVariant) {
@@ -262,7 +265,12 @@ export function ProductDetailClient({ product }: { product: Product }) {
               className="text-[26px] font-bold tracking-tight text-[#111111] lg:text-[32px]"
               style={{ animation: "popIn 0.4s ease-out both" }}
             >
-              {formatPrice(product.price)}
+              {product.salePrice != null ? (
+                <>
+                  <span className="text-rose-500">{formatPrice(product.salePrice)}</span>
+                  <span className="ml-2 text-base font-normal text-[#B79A98] line-through">{formatPrice(product.price)}</span>
+                </>
+              ) : formatPrice(product.price)}
             </span>
 
             <motion.button
