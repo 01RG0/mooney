@@ -32,16 +32,24 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
+  const [stripIndex, setStripIndex] = useState(0)
+  const [dragStart, setDragStart] = useState<number | null>(null)
 
   const useVariants = !!(product.hasColors && product.colorVariants?.length);
   const activeVariant = useVariants ? product.colorVariants![selectedVariantIndex] : undefined;
+  const productImages = product.images ?? [];
 
   useEffect(() => {
     void trackProductView(product.id, product.slug);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product.id]);
 
-  const productImages = product.images ?? [];
+  useEffect(() => {
+    if (productImages.length <= 1) return
+    const id = setInterval(() => setStripIndex(i => (i + 1) % productImages.length), 3000)
+    return () => clearInterval(id)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productImages.length])
 
   // Build per-variant offset map so clicking a color jumps to its first image
   const variantOffsets: number[] = [];
@@ -53,9 +61,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
     }
   }
 
-  // Full gallery: all variant images in order, then product-level images
+  // Hero gallery: variant images per color, or product images if no variants
   const galleryImages = useVariants
-    ? [...product.colorVariants!.flatMap(v => v.images), ...productImages]
+    ? product.colorVariants!.flatMap(v => v.images)
     : productImages;
 
   function handleVariantChange(idx: number) {
@@ -139,26 +147,60 @@ export function ProductDetailClient({ product }: { product: Product }) {
               />
             </motion.div>
           </div>
-          {galleryImages.length > 1 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {galleryImages.map((img, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setActiveIndex(i)}
-                  className={`h-12 w-12 overflow-hidden rounded-xl border-2 transition-all ${
-                    i === activeIndex ? 'border-rose-400' : 'border-transparent opacity-60 hover:opacity-90'
-                  }`}
-                >
-                  <img src={img} alt="" className="h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          {/* ── Bottom row: sliding product images + color swatches ── */}
+          <div className="mt-3 mb-2 flex items-center gap-3 px-1 lg:mt-6 lg:mb-0">
 
-          {/* ── Colour selector — rounded-square tiles, evenly spread ── */}
-          {useVariants ? (
-            <div className="mt-4 mb-2 flex justify-center gap-3.5 lg:mt-8 lg:mb-0">
+            {/* Draggable / auto-sliding product images strip */}
+            {productImages.length > 0 && (
+              <div
+                className="relative overflow-hidden rounded-2xl"
+                style={{ height: 56, width: 120, flexShrink: 0 }}
+                onMouseDown={e => setDragStart(e.clientX)}
+                onMouseUp={e => {
+                  if (dragStart === null) return
+                  const dx = e.clientX - dragStart
+                  if (Math.abs(dx) > 20) setStripIndex(i => dx < 0 ? (i + 1) % productImages.length : (i - 1 + productImages.length) % productImages.length)
+                  setDragStart(null)
+                }}
+                onTouchStart={e => setDragStart(e.touches[0].clientX)}
+                onTouchEnd={e => {
+                  if (dragStart === null) return
+                  const dx = e.changedTouches[0].clientX - dragStart
+                  if (Math.abs(dx) > 20) setStripIndex(i => dx < 0 ? (i + 1) % productImages.length : (i - 1 + productImages.length) % productImages.length)
+                  setDragStart(null)
+                }}
+              >
+                <div
+                  className="flex h-full transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]"
+                  style={{ transform: `translateX(-${stripIndex * 100}%)` }}
+                >
+                  {productImages.map((img, i) => (
+                    <div
+                      key={i}
+                      className="h-full shrink-0 cursor-pointer"
+                      style={{ width: 120 }}
+                      onClick={() => {
+                        setActiveIndex(useVariants ? 0 : i)
+                        setStripIndex(i)
+                      }}
+                    >
+                      <img src={img} alt="" className="h-full w-full object-cover" draggable={false} />
+                    </div>
+                  ))}
+                </div>
+                {productImages.length > 1 && (
+                  <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-1 pointer-events-none">
+                    {productImages.map((_, i) => (
+                      <span key={i} className={`block rounded-full transition-all duration-300 ${i === stripIndex ? 'w-3 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50'}`} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Colour swatches */}
+            {useVariants ? (
+            <div className="flex flex-wrap gap-2.5">
               {product.colorVariants!.map((v, i) => {
                 const isActive = i === selectedVariantIndex;
                 const isOutOfStock = v.stock === 0;
@@ -195,7 +237,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
               })}
             </div>
           ) : product.colors.length > 0 ? (
-            <div className="mt-4 mb-2 flex justify-center gap-3.5 lg:mt-8 lg:mb-0">
+            <div className="flex flex-wrap gap-2.5">
               {product.colors.map((c, i) => {
                 const isActive = i === colorIndex;
                 return (
@@ -231,6 +273,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
               })}
             </div>
           ) : null}
+
+          </div>{/* end bottom row */}
         </div>
 
         {/* ── Cream card — mobile: overlaps stage · desktop: right column ── */}
