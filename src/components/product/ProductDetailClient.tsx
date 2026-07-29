@@ -32,6 +32,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(product.mainImageIndex ?? 0)
+  const [sharedActiveIndex, setSharedActiveIndex] = useState(0)
+  const [showingShared, setShowingShared] = useState(false)
 
   const useVariants = !!(product.hasColors && product.colorVariants?.length);
   const activeVariant = useVariants ? product.colorVariants![selectedVariantIndex] : undefined;
@@ -44,6 +46,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
   function handleVariantChange(idx: number) {
     setSelectedVariantIndex(idx);
     setActiveIndex(0);
+    setShowingShared(false);
   }
 
   const color = useVariants
@@ -52,9 +55,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   const variantImages = useVariants ? (activeVariant?.images ?? []) : null;
   const productImages = product.images ?? [];
-  const galleryImages = variantImages !== null
-    ? [...variantImages, ...productImages]
-    : productImages;
+  const galleryImages = variantImages ?? productImages;
+  // product-level images shown in a separate strip when variants are active
+  const sharedImages = useVariants && productImages.length > 0 ? productImages : [];
 
   function handleAdd() {
     if (useVariants && activeVariant) {
@@ -84,9 +87,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
     window.setTimeout(() => setAdded(false), 1800);
   }
 
-  const displayImage = galleryImages.length
-    ? galleryImages[activeIndex] ?? galleryImages[0] ?? product.image
-    : product.image
+  const displayImage = showingShared
+    ? (sharedImages[sharedActiveIndex] ?? sharedImages[0] ?? product.image)
+    : (galleryImages.length ? galleryImages[activeIndex] ?? galleryImages[0] ?? product.image : product.image)
 
   const descriptionText =
     product.description?.trim() || " ";
@@ -128,20 +131,42 @@ export function ProductDetailClient({ product }: { product: Product }) {
               />
             </motion.div>
           </div>
+          {/* Color variant image strip */}
           {galleryImages.length > 1 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {galleryImages.map((img, i) => (
                 <button
                   key={i}
                   type="button"
-                  onClick={() => setActiveIndex(i)}
+                  onClick={() => { setActiveIndex(i); setShowingShared(false); }}
                   className={`h-12 w-12 overflow-hidden rounded-xl border-2 transition-all ${
-                    i === activeIndex ? 'border-rose-400' : 'border-transparent opacity-60 hover:opacity-90'
+                    !showingShared && i === activeIndex ? 'border-rose-400' : 'border-transparent opacity-60 hover:opacity-90'
                   }`}
                 >
                   <img src={img} alt="" className="h-full w-full object-cover" />
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Product-level images strip — separate box when variants active */}
+          {sharedImages.length > 0 && (
+            <div className="mt-2 rounded-2xl bg-white/20 px-3 py-2">
+              <p className="mb-1.5 text-[11px] font-medium tracking-wide text-[#B79A98] uppercase">Product Images</p>
+              <div className="flex flex-wrap gap-2">
+                {sharedImages.map((img, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => { setSharedActiveIndex(i); setShowingShared(true); }}
+                    className={`h-12 w-12 overflow-hidden rounded-xl border-2 transition-all ${
+                      showingShared && i === sharedActiveIndex ? 'border-rose-400' : 'border-transparent opacity-60 hover:opacity-90'
+                    }`}
+                  >
+                    <img src={img} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
