@@ -156,6 +156,7 @@ OrderStatus = "pending" | "confirmed" | "shipped" | "delivered"
             | "cancelled" | "pending-payment" | "pending-manual-confirmation"
 ```
 
+
 **Indexes:**
 - `userId ASC + createdAt DESC` — user order history
 - `status ASC + createdAt DESC` — admin filter by status
