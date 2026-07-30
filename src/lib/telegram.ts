@@ -10,12 +10,16 @@ const STATUS_EMOJI: Record<string, string> = {
   cancelled: '❌',
 }
 
-type OrderWithFee = Order & { deliveryCost?: number; shippingCost?: number; subtotal?: number; adminNote?: string }
+type OrderWithFee = Order & { deliveryCost?: number; shippingCost?: number; subtotal?: number; adminNote?: string; discountAmount?: number; couponCode?: string }
 
 export function formatOrderMessage(order: OrderWithFee): string {
   const s = order.shippingDetails
   const items = order.items
-    .map((i) => `  • ${i.name} × ${i.quantity} = <b>${(i.price * i.quantity).toLocaleString()} EGP</b>`)
+    .map((i) => {
+      const colorTag = i.color && i.color !== 'default' ? ` <i>(${i.color})</i>` : ''
+      const hex = i.colorHex ? ` <code>${i.colorHex}</code>` : ''
+      return `  • ${i.name}${colorTag}${hex} × ${i.quantity} = <b>${(i.price * i.quantity).toLocaleString()} EGP</b>`
+    })
     .join('\n')
 
   const emoji = STATUS_EMOJI[order.status] ?? '❓'
@@ -24,30 +28,33 @@ export function formatOrderMessage(order: OrderWithFee): string {
     : ''
   const deliveryFee = order.deliveryCost ?? order.shippingCost ?? 0
   const phone = s.phone
+  const discount = order.discountAmount ?? 0
+
+  const addressParts = [s.address, s.city]
+  if (s.postalCode) addressParts.push(s.postalCode)
+  if (s.governorate) addressParts.push(s.governorate)
+  if (s.country) addressParts.push(s.country)
 
   return `
-🛍 <b>Order</b> — <code>${order.id}</code>
-${emoji} Status: <b>${order.status}</b>
-${order.adminNote ? `\n📝 Note: ${order.adminNote}` : ''}
+🛍 <b>New Order</b> — <code>${order.id}</code>
+${emoji} Status: <b>${order.status}</b>${order.adminNote ? `\n📝 Note: ${order.adminNote}` : ''}
 
 👤 <b>Customer</b>
-Name: ${s.fullName}
-Email: ${s.email}
-${phone ? `Phone: ${phone}` : ''}
-${order.paymentPhone ? `Orange Cash: ${order.paymentPhone}` : ''}
+Name: <b>${s.fullName}</b>
+📞 Phone: <b>${phone ?? '—'}</b>
+📧 Email: ${s.email}${order.paymentPhone ? `\n💳 Orange Cash #: <b>${order.paymentPhone}</b>` : ''}
 
-🛒 <b>Items</b>
+🛒 <b>Items (${order.items.length})</b>
 ${items}
 
 💰 <b>Payment</b>
 Subtotal: ${(order.subtotal ?? 0).toLocaleString()} EGP
-Delivery: ${Number(deliveryFee).toLocaleString()} EGP
+Delivery: ${Number(deliveryFee).toLocaleString()} EGP${discount > 0 ? `\nDiscount${order.couponCode ? ` (${order.couponCode})` : ''}: -${discount.toLocaleString()} EGP` : ''}
 Total: <b>${order.total.toLocaleString()} EGP</b>
-Method: ${order.paymentMethod ?? 'N/A'}
+Method: <b>${order.paymentMethod ?? 'N/A'}</b>
 
-📍 <b>Address</b>
-${s.address}, ${s.city}
-${s.governorate ? `Governorate: ${s.governorate}` : ''}${mapLink}
+📍 <b>Delivery Address</b>
+${addressParts.join(', ')}${mapLink}
 
 🕐 ${new Date(order.createdAt).toLocaleString('en-EG', { timeZone: 'Africa/Cairo' })}
 `.trim()
