@@ -15,16 +15,17 @@ export async function CategoryChips() {
             <Link
               key={category.slug}
               href={`/shop?category=${category.slug}`}
-              className="group flex items-center gap-4 rounded-3xl bg-cream/70 p-4 transition-colors hover:bg-cream"
+              className="group flex items-center gap-3 rounded-3xl bg-cream/70 p-3 transition-colors hover:bg-cream lg:gap-4 lg:p-4"
             >
-              <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blush-100">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-blush-100 lg:h-16 lg:w-16">
                 {category.image ? (
                   <Image
                     src={category.image}
                     alt=""
                     width={64}
                     height={64}
-                    className="h-14 w-14 object-contain"
+                    priority
+                    className="h-10 w-10 object-contain lg:h-14 lg:w-14"
                   />
                 ) : (
                   <span className="font-display text-2xl text-brown-700">
@@ -33,9 +34,9 @@ export async function CategoryChips() {
                 )}
               </span>
               <span className="min-w-0">
-                <span className="flex items-center gap-1 font-display text-lg font-semibold text-brown-900">
-                  {category.name}
-                  <ArrowUpRightIcon className="h-4 w-4 opacity-40 transition-opacity group-hover:opacity-100" />
+                <span className="flex items-center gap-1 font-display text-sm font-semibold text-brown-900 lg:text-lg">
+                  <span className="truncate">{category.name}</span>
+                  <ArrowUpRightIcon className="h-3.5 w-3.5 shrink-0 opacity-40 transition-opacity group-hover:opacity-100 lg:h-4 lg:w-4" />
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-brown-700">
                   {category.tagline}

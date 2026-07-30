@@ -39,6 +39,7 @@ export function InfoBand() {
             </span>
             <h3 className="mt-4 font-display text-xl font-semibold text-blush-100">
               Meet our featured artisans each month.
+              <span className="mt-2 block">My accounts 👇👇👇</span>
             </h3>
             <a
               href="https://www.instagram.com/mer0made/"

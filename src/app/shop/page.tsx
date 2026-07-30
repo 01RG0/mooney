@@ -2,7 +2,7 @@ import { ShopClient } from "@/components/shop/ShopClient";
 import { getAllProducts, getCategories } from "@/lib/repository/products";
 import type { Metadata } from "next";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Shop — Meromade",

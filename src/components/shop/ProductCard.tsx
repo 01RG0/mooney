@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
   const rm = useReducedMotion();
 
   const firstVariant = product.hasColors ? product.colorVariants?.[0] : undefined;
-  const cardImage = firstVariant?.images?.[0] ?? product.image;
+  const cardImage = product.image ?? firstVariant?.images?.[0];
   const defaultColor = firstVariant?.name ?? product.colors[0]?.name ?? "Default";
   const defaultColorHex = firstVariant?.hex ?? product.colors[0]?.hex;
   const defaultColorId = firstVariant?.id;
@@ -45,6 +45,7 @@ export function ProductCard({ product }: { product: Product }) {
             alt={product.name}
             width={300}
             height={300}
+            sizes="(max-width: 768px) 50vw, 25vw"
             className="h-full w-full object-contain"
           />
         </motion.div>
@@ -59,13 +60,13 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name}
         </Link>
 
-        <div className="mt-3 flex items-center justify-between">
-          <span className="font-display text-lg font-semibold text-brown-900">
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <span className="font-display text-base font-semibold leading-tight text-brown-900 sm:text-lg">
             {product.salePrice != null ? (
-              <>
+              <span className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-1.5">
                 <span className="text-rose-500">{formatPrice(product.salePrice)}</span>
-                <span className="ml-1.5 text-sm font-normal text-brown-500 line-through">{formatPrice(product.price)}</span>
-              </>
+                <span className="text-sm font-normal text-brown-500 line-through">{formatPrice(product.price)}</span>
+              </span>
             ) : (
               formatPrice(product.price)
             )}
@@ -86,9 +87,9 @@ export function ProductCard({ product }: { product: Product }) {
                 selectedColorId: defaultColorId,
               })
             }
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-rose-400 text-white transition-colors hover:bg-rose-500"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-400 text-white transition-colors hover:bg-rose-500 sm:h-11 sm:w-11"
           >
-            <PlusIcon className="h-4 w-4" />
+            <PlusIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </motion.button>
         </div>
       </div>
