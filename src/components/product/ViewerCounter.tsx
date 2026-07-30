@@ -21,7 +21,7 @@ export function ViewerCounter({
     if (!vc?.enabled) return
     const interval = setInterval(
       () => setCount(rand(vc.min, vc.max)),
-      rand(3000, 6000),
+      rand(7000, 15000),
     )
     return () => clearInterval(interval)
   }, [vc?.enabled, vc?.min, vc?.max])
