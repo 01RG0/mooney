@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { getAdminDb } from '@/lib/firebase-admin'
 import type { Category, Product } from '@/lib/types'
 
@@ -21,22 +22,23 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   }
 }
 
-export async function getCategories(): Promise<Category[]> {
+export const getCategories = cache(async (): Promise<Category[]> => {
   try {
     const snap = await getAdminDb().collection('categories').get()
     return snap.docs.map(d => ({ id: d.id, ...d.data() })) as unknown as Category[]
   } catch {
     return []
   }
-}
+})
 
 export async function getNewArrivals(limit = 6): Promise<Product[]> {
   try {
-    const snap = await getAdminDb().collection('products').get()
-    return snap.docs
-      .map(d => ({ id: d.id, ...d.data() }) as Product)
-      .filter(p => p.isNew === true)
-      .slice(0, limit)
+    const snap = await getAdminDb()
+      .collection('products')
+      .where('isNew', '==', true)
+      .limit(limit)
+      .get()
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }) as Product)
   } catch {
     return []
   }

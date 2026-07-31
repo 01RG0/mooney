@@ -12,14 +12,16 @@ import { PageViewTracker } from "@/components/layout/PageViewTracker";
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "900"],
+  weight: ["600", "900"],
   style: ["normal", "italic"],
+  display: "swap",
 });
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 // Bouncy cursive used for the brand wordmark.
@@ -27,6 +29,7 @@ const pacifico = Pacifico({
   variable: "--font-pacifico",
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {

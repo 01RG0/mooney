@@ -14,7 +14,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       <AnimatePresence mode="popLayout" initial={false}>
         <motion.div
           key={pathname}
-          initial="initial"
+          initial={false}
           animate="animate"
           exit="exit"
           variants={variants}
